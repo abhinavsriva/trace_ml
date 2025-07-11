@@ -58,7 +58,7 @@ def run_with_tracing(
 
     # Collect all trackers
     sampler_logger_pairs = [
-        (system_sampler, system_json_logger),
+        # (system_sampler, system_json_logger),
         (system_sampler, system_stdout_logger),
     ]
 

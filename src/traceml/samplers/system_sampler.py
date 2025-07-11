@@ -79,9 +79,9 @@ class SystemSampler(BaseSampler):
             error_snapshot = {
                 "cpu_percent": 0.0,
                 "ram_percent_used": 0.0,
-                "ram_used_gb": 0.0,
-                "ram_available_gb": 0.0,
-                "ram_total_gb": 0.0,
+                "ram_used_mb": 0.0,
+                "ram_available_mb": 0.0,
+                "ram_total_mb": 0.0,
                 "error": str(e) # Error message (for debugging)
             }
             self._latest_snapshot = error_snapshot
