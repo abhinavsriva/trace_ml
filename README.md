@@ -2,7 +2,7 @@
 A simple CLI to automatically trace PyTorch training memory. 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Stars](https://img.shields.io/github/stars/abhinavsriva/traceml?style=social)](https://github.com/abhinavsriva/traceml/stargazers)
+[![GitHub Stars](https://img.shields.io/github/stars/abhinavsriva/trace_ml?style=social)](https://github.com/abhinavsriva/trace_ml/stargazers)
 
 ## 💡 The Problem
 
