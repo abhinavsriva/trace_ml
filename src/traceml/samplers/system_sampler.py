@@ -116,24 +116,24 @@ class SystemSampler(BaseSampler):
                     sum(self.ram_percent_samples) / len(self.ram_percent_samples), 2)
                 summary["ram_peak_percent_used"] = round(max(self.ram_percent_samples), 2)
 
-                summary["ram_average_used_gb"] = round(sum(self.ram_used_gb_samples) / len(self.ram_used_gb_samples), 2)
-                summary["ram_peak_used_gb"] = round(max(self.ram_used_gb_samples), 2)
+                summary["ram_average_used"] = round(sum(self.ram_used_samples) / len(self.ram_used_samples), 2)
+                summary["ram_peak_used"] = round(max(self.ram_used_samples), 2)
 
-                summary["ram_average_available_gb"] = round(
-                    sum(self.ram_available_gb_samples) / len(self.ram_available_gb_samples), 2)
-                summary["ram_min_available_gb"] = round(min(self.ram_available_gb_samples),
+                summary["ram_average_available"] = round(
+                    sum(self.ram_available_samples) / len(self.ram_available_samples), 2)
+                summary["ram_min_available"] = round(min(self.ram_available_samples),
                                                         2)  # Min is often more useful for available
 
                 # Total RAM will likely be constant, so just report the first sampled value or max
-                summary["ram_total_gb"] = round(max(self.ram_total_gb_samples) if self.ram_total_gb_samples else 0.0, 2)
+                summary["ram_total"] = round(max(self.ram_total_samples) if self.ram_total_samples else 0.0, 2)
             else:
                 summary["ram_average_percent_used"] = 0.0
                 summary["ram_peak_percent_used"] = 0.0
                 summary["ram_average_used_gb"] = 0.0
                 summary["ram_peak_used_gb"] = 0.0
-                summary["ram_average_available_gb"] = 0.0
-                summary["ram_min_available_gb"] = 0.0
-                summary["ram_total_gb"] = 0.0
+                summary["ram_average_available"] = 0.0
+                summary["ram_min_available"] = 0.0
+                summary["ram_total"] = 0.0
 
             summary["total_system_samples"] = len(self.cpu_samples)
 
