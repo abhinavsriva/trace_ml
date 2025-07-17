@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
+
 class BaseSampler(ABC):
     """
     Abstract base class for samplers that monitor runtime metrics,

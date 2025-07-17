@@ -19,6 +19,7 @@ class StdoutDisplayManager:
     """
     Manages a single shared Rich Live display and a dynamic Layout for all stdout loggers.
     """
+
     _console: Console = Console()
     _live_display: Optional[Live] = None
     _layout: Layout = Layout(name="root")
@@ -61,16 +62,19 @@ class StdoutDisplayManager:
                 cls._live_display = Live(
                     cls._layout,
                     console=cls._console,
-                    auto_refresh=False, # We'll manage refresh manually
-                    transient=False,    # Keep output after stop
-                    screen=True         # Use full screen if possible for better experience
+                    auto_refresh=False,  # We'll manage refresh manually
+                    transient=False,  # Keep output after stop
+                    screen=True,  # Use full screen if possible for better experience
                 )
                 try:
                     cls._live_display.start()
                     cls._live_display.refresh()
                 except Exception as e:
-                    print(f"[TraceML] Failed to start shared live display: {e}", file=sys.stderr)
-                    cls._live_display = None # Reset if failed to start
+                    print(
+                        f"[TraceML] Failed to start shared live display: {e}",
+                        file=sys.stderr,
+                    )
+                    cls._live_display = None  # Reset if failed to start
 
     @classmethod
     def stop_display(cls):
@@ -80,13 +84,14 @@ class StdoutDisplayManager:
                 try:
                     cls._live_display.stop()
                 except Exception as e:
-                    print(f"[TraceML] Error stopping live display: {e}", file=sys.stderr)
+                    print(
+                        f"[TraceML] Error stopping live display: {e}", file=sys.stderr
+                    )
                 finally:
                     cls._live_display = None
                     cls._panel_content_fns.clear()
                     # Re-initialize layout to reset state for next run
                     cls._layout = Layout(name="root")
-
 
     @classmethod
     def register_panel_content(cls, panel_name: str, content_fn: Callable[[], Any]):
@@ -95,10 +100,12 @@ class StdoutDisplayManager:
         """
         with cls._lock:
             if cls._layout.get(panel_name) is None:
-                print(f"[TraceML] WARNING: Layout panel '{panel_name}' not found. Cannot register content.", file=sys.stderr)
+                print(
+                    f"[TraceML] WARNING: Layout panel '{panel_name}' not found. Cannot register content.",
+                    file=sys.stderr,
+                )
                 return
             cls._panel_content_fns[panel_name] = content_fn
-
 
     @classmethod
     def update_display(cls):
@@ -112,23 +119,26 @@ class StdoutDisplayManager:
                 # print("Live display not active. Logging directly to console.", file=sys.stderr)
                 # Fallback to direct print for each registered panel (simplified)
                 # This fallback needs a better design to show *all* current state
-                return # For now, just exit if live display isn't running
+                return  # For now, just exit if live display isn't running
 
             try:
                 for panel_name, content_fn in cls._panel_content_fns.items():
                     try:
                         renderable = content_fn()
                         if renderable is not None:
-                             cls._layout[panel_name].update(renderable)
+                            cls._layout[panel_name].update(renderable)
                     except Exception as e:
                         error_panel = Panel(
                             f"[red]Error rendering {panel_name}: {e}[/red]",
                             title=f"[bold red]Render Error: {panel_name}[/bold red]",
-                            border_style="red"
+                            border_style="red",
                         )
                         cls._layout[panel_name].update(error_panel)
-                        print(f"[TraceML] Error in rendering content for panel {panel_name}: {e}", file=sys.stderr)
+                        print(
+                            f"[TraceML] Error in rendering content for panel {panel_name}: {e}",
+                            file=sys.stderr,
+                        )
 
-                cls._live_display.refresh() # Only refresh once per update cycle
+                cls._live_display.refresh()  # Only refresh once per update cycle
             except Exception as e:
                 print(f"[TraceML] Error updating live display: {e}", file=sys.stderr)

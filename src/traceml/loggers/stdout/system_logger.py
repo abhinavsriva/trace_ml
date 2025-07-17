@@ -7,6 +7,7 @@ from typing import Dict, Any
 from .base_logger import BaseStdoutLogger
 from .display_manager import LIVE_METRICS_PANEL_NAME
 
+
 class SystemStdoutLogger(BaseStdoutLogger):
     """
     Stdout logger for System (CPU, RAM) usage metrics.
@@ -36,17 +37,14 @@ class SystemStdoutLogger(BaseStdoutLogger):
         table = Table(box=None, show_header=False, padding=(0, 2))
         table.add_column(justify="center", style="bold green")
         table.add_column(justify="center", style="bold blue")
-        table.add_row(
-            f"CPU: {cpu_val:.1f}%",
-            f"RAM: {ram_display_str}"
-        )
+        table.add_row(f"CPU: {cpu_val:.1f}%", f"RAM: {ram_display_str}")
 
         return Panel(
             table,
             title="Live Metrics",
             title_align="center",
             border_style="dim white",
-            width=80
+            width=80,
         )
 
     def log_summary(self, summary: Dict[str, Any]):

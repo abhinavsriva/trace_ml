@@ -25,7 +25,10 @@ def test_system_sampler_with_heavy_task():
         shutil.rmtree(log_dir)
     os.makedirs(log_dir, exist_ok=True)
 
-    print(f"\n[TraceML Test] Starting test: {test_id}. Logs in: {log_dir}", file=sys.stderr)
+    print(
+        f"\n[TraceML Test] Starting test: {test_id}. Logs in: {log_dir}",
+        file=sys.stderr,
+    )
 
     # Initialize samplers and loggers
     system_sampler = SystemSampler()
@@ -46,8 +49,7 @@ def test_system_sampler_with_heavy_task():
         iteration = 0
         while time.time() < end_time:
             # Generates a large arrays, and increases RAM allocation/deallocation
-            X, y = make_regression(n_samples=int(2e5), n_features=50,
-                                   noise=0.1)
+            X, y = make_regression(n_samples=int(2e5), n_features=50, noise=0.1)
             model = LinearRegression()
             model.fit(X, y)
             iteration += 1
@@ -55,7 +57,10 @@ def test_system_sampler_with_heavy_task():
             # Add a small sleep to allow other threads (like sampler) to run without extreme contention
             time.sleep(0.01)
 
-        print(f"\n[TraceML Test] Heavy task finished after {iteration} iterations.", file=sys.stderr)
+        print(
+            f"\n[TraceML Test] Heavy task finished after {iteration} iterations.",
+            file=sys.stderr,
+        )
 
     except Exception as e:
         print(f"[TraceML Test] Error during test execution: {e}", file=sys.stderr)
@@ -66,7 +71,10 @@ def test_system_sampler_with_heavy_task():
         tracker.log_summaries()
         StdoutDisplayManager.stop_display()
 
-    print(f"\n[TraceML Test] SystemSampler (CPU & RAM) test passed successfully for {test_id}.", file=sys.stderr)
+    print(
+        f"\n[TraceML Test] SystemSampler (CPU & RAM) test passed successfully for {test_id}.",
+        file=sys.stderr,
+    )
 
 
 if __name__ == "__main__":
