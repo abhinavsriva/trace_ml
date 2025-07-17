@@ -7,9 +7,11 @@ import traceback
 
 
 from traceml.samplers.system_sampler import SystemSampler
+from traceml.samplers.process_sampler import ProcessSampler
 
 # from traceml.loggers.json.system_logger import SystemJSONLogger
 from traceml.loggers.stdout.system_logger import SystemStdoutLogger
+from traceml.loggers.stdout.process_logger import ProcessStdoutLogger
 
 from traceml.manager.tracker_manager import TrackerManager
 
@@ -54,17 +56,20 @@ def run_with_tracing(
     # Create specific loggers for different types of data (CPU, GPU, NN memory and more)
     # This design allows us to easily add more samplers/loggers later
     system_sampler = SystemSampler()
+    process_sampler = ProcessSampler()
 
     # jSON loggers
     # system_json_logger = SystemJSONLogger(os.path.join(log_dir, "cpu_metrics"))
 
     # stdout loggers (on terminal info)
     system_stdout_logger = SystemStdoutLogger()
+    process_stdout_logger = ProcessStdoutLogger()
 
     # Collect all trackers
     sampler_logger_pairs = [
         # (system_sampler, system_json_logger),
         (system_sampler, [system_stdout_logger]),
+        (process_sampler, [process_stdout_logger]),
     ]
 
     tracker = TrackerManager(sampler_logger_pairs, interval_sec=interval)

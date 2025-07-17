@@ -5,7 +5,7 @@ from rich.table import Table
 from typing import Dict, Any
 
 from .base_logger import BaseStdoutLogger
-from .display_manager import LIVE_METRICS_PANEL_NAME
+from .display_manager import SYSTEM_PANEL_NAME
 
 
 class SystemStdoutLogger(BaseStdoutLogger):
@@ -15,7 +15,7 @@ class SystemStdoutLogger(BaseStdoutLogger):
     """
 
     def __init__(self):
-        super().__init__(name="System", panel_name=LIVE_METRICS_PANEL_NAME)
+        super().__init__(name="System", panel_name=SYSTEM_PANEL_NAME)
         # Initialize default values for the live metrics panel
         self._latest_data = {
             "cpu_percent": 0.0,
@@ -33,7 +33,6 @@ class SystemStdoutLogger(BaseStdoutLogger):
 
         ram_display_str = f"{ram_val:.0f}MB/{ram_total:.0f}MB"
 
-        # Example of a single-row Table for better alignment:
         table = Table(box=None, show_header=False, padding=(0, 2))
         table.add_column(justify="center", style="bold green")
         table.add_column(justify="center", style="bold blue")
@@ -41,7 +40,7 @@ class SystemStdoutLogger(BaseStdoutLogger):
 
         return Panel(
             table,
-            title="Live Metrics",
+            title="Live System Metrics",
             title_align="center",
             border_style="dim white",
             width=80,

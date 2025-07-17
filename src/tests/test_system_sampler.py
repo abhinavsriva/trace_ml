@@ -5,10 +5,11 @@ import shutil
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression
 
-
+from traceml.samplers.process_sampler import ProcessSampler
 from traceml.samplers.system_sampler import SystemSampler
 from traceml.manager.tracker_manager import TrackerManager
 from traceml.loggers.stdout.system_logger import SystemStdoutLogger
+from traceml.loggers.stdout.process_logger import ProcessStdoutLogger
 from traceml.loggers.stdout.display_manager import StdoutDisplayManager
 
 
@@ -32,11 +33,14 @@ def test_system_sampler_with_heavy_task():
 
     # Initialize samplers and loggers
     system_sampler = SystemSampler()
+    process_sampler = ProcessSampler()
     system_stdout_logger = SystemStdoutLogger()
+    process_stdout_logger = ProcessStdoutLogger()
 
     # Setup TrackerManager components: (sampler, [list of loggers])
     tracker_components = [
         (system_sampler, [system_stdout_logger]),
+        (process_sampler, [process_stdout_logger]),
     ]
     tracker = TrackerManager(components=tracker_components, interval_sec=0.5)
 
