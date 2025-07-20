@@ -13,7 +13,9 @@ class TrackerManager:
     """
 
     # components: List[Tuple[SamplerType, List[LoggerType]]]
-    def __init__(self, components: List[Tuple[Any, List[Any]]], interval_sec: float = 1.0):
+    def __init__(
+        self, components: List[Tuple[Any, List[Any]]], interval_sec: float = 1.0
+    ):
         """
         Args:
             components (list of tuples): List of (sampler, list of loggers) pairs.
@@ -35,8 +37,14 @@ class TrackerManager:
                 try:
                     snapshot = sampler.sample()
                 except Exception as e:
-                    print(f"[TraceML] Error in sampler '{sampler.__class__.__name__}'.sample(): {e}", file=sys.stderr)
-                    snapshot = {"error": str(e), "sampler_name": sampler.__class__.__name__}
+                    print(
+                        f"[TraceML] Error in sampler '{sampler.__class__.__name__}'.sample(): {e}",
+                        file=sys.stderr,
+                    )
+                    snapshot = {
+                        "error": str(e),
+                        "sampler_name": sampler.__class__.__name__,
+                    }
 
                 # 2. Log snapshot to all associated loggers
                 for logger in loggers:
@@ -45,7 +53,8 @@ class TrackerManager:
                     except Exception as e:
                         print(
                             f"[TraceML] Error in logger '{logger.__class__.__name__}'.log() for sampler '{sampler.__class__.__name__}': {e}",
-                            file=sys.stderr)
+                            file=sys.stderr,
+                        )
 
             # 3. Wait for the next interval
             self._stop_event.wait(self.interval_sec)
@@ -70,7 +79,10 @@ class TrackerManager:
             self._thread.join(timeout=self.interval_sec * 2)
 
             if self._thread.is_alive():
-                print(f"[TraceML] WARNING: Tracker thread did not terminate within timeout.", file=sys.stderr)
+                print(
+                    f"[TraceML] WARNING: Tracker thread did not terminate within timeout.",
+                    file=sys.stderr,
+                )
 
             print("[TraceML] TrackerManager stopped.", file=sys.stderr)
 
@@ -85,8 +97,10 @@ class TrackerManager:
                         try:
                             shutdown_fn()
                         except Exception as e:
-                            print(f"[TraceML] Logger '{logger.__class__.__name__}' shutdown error: {e}",
-                                  file=sys.stderr)
+                            print(
+                                f"[TraceML] Logger '{logger.__class__.__name__}' shutdown error: {e}",
+                                file=sys.stderr,
+                            )
 
         except Exception as e:
             print(f"[TraceML] Failed to stop TrackerManager: {e}", file=sys.stderr)
@@ -102,8 +116,10 @@ class TrackerManager:
             try:
                 summary = sampler.get_summary()
             except Exception as e:
-                print(f"[TraceML] Error getting summary from sampler '{sampler.__class__.__name__}': {e}",
-                      file=sys.stderr)
+                print(
+                    f"[TraceML] Error getting summary from sampler '{sampler.__class__.__name__}': {e}",
+                    file=sys.stderr,
+                )
                 summary = {"error": str(e), "sampler_name": sampler.__class__.__name__}
 
             for logger in loggers:
@@ -112,5 +128,6 @@ class TrackerManager:
                 except Exception as e:
                     print(
                         f"[TraceML] Error in logger '{logger.__class__.__name__}'.log_summary() for sampler '{sampler.__class__.__name__}': {e}",
-                        file=sys.stderr)
+                        file=sys.stderr,
+                    )
         print("[TraceML] Summaries generated.", file=sys.stderr)

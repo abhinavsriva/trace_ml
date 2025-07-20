@@ -7,16 +7,18 @@ import traceback
 
 
 from traceml.samplers.system_sampler import SystemSampler
+
 # from traceml.loggers.json.system_logger import SystemJSONLogger
 from traceml.loggers.stdout.system_logger import SystemStdoutLogger
 
 from traceml.manager.tracker_manager import TrackerManager
 
+
 def run_with_tracing(
-        script_path: str,
-        interval: float = 1.0,
-        log_dir: str = None,
-        script_args: list = None
+    script_path: str,
+    interval: float = 1.0,
+    log_dir: str = None,
+    script_args: list = None,
 ):
     """
     Entry point for CLI: starts tracking and runs the target script.
@@ -29,7 +31,10 @@ def run_with_tracing(
     """
     # Checking script path existence
     if not script_path or not os.path.exists(script_path):
-        print(f"Error: Script '{script_path}' not found or not specified.", file=sys.stderr)
+        print(
+            f"Error: Script '{script_path}' not found or not specified.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # Checking if log dir exists or provided by the user
@@ -73,7 +78,6 @@ def run_with_tracing(
     exit_code = 0
     exception_caught = None
 
-
     tracker.start()
 
     try:
@@ -92,7 +96,7 @@ def run_with_tracing(
     except Exception as e:
         # Catch any other unhandled exceptions (e.g., RuntimeError, MemoryError)
         exception_caught = e
-        exit_code = 1 # Failure
+        exit_code = 1  # Failure
         print(f"\n--- User script crashed! ---", file=sys.stderr)
         print(f"Exception Type: {type(e).__name__}", file=sys.stderr)
         print(f"Exception Message: {e}", file=sys.stderr)
@@ -117,49 +121,46 @@ def run_with_tracing(
 
 def main():
     parser = argparse.ArgumentParser(
-        "TraceML: Automatic PyTorch memory, CPU, and GPU profiling for training runs.")
+        "TraceML: Automatic PyTorch memory, CPU, and GPU profiling for training runs."
+    )
 
     # Add a version argument
-    parser.add_argument(
-        "-v", "--version", action="version",
-        version="%(prog)s 0.1.0"
-    )
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s 0.1.0")
     # Subparsers for commands
     subparsers = parser.add_subparsers(
         dest="command",
         title="Available Commands",
         required=True,
-        help="Use 'traceml <command> --help' for more information on a specific command."
+        help="Use 'traceml <command> --help' for more information on a specific command.",
     )
 
     # --- 'run' subcommand ---
     run_parser = subparsers.add_parser(
         "run",
         help="Run a Python script with TraceML's profiling enabled.",
-        description="Executes a given Python script while automatically tracking its PyTorch memory, CPU, and GPU usage."
+        description="Executes a given Python script while automatically tracking its PyTorch memory, CPU, and GPU usage.",
     )
     run_parser.add_argument(
-        "script",
-        help="Path to the Python script to run with TraceML profiling."
+        "script", help="Path to the Python script to run with TraceML profiling."
     )
     run_parser.add_argument(
         "--interval",
         type=float,
         default=1.0,
-        help="Sampling interval for resource metrics in seconds (default: 1.0)."
+        help="Sampling interval for resource metrics in seconds (default: 1.0).",
     )
     run_parser.add_argument(
         "--log-dir",
         type=str,
         default=os.path.join(os.getcwd(), ".traceml_runs"),
-        help="Root directory to save TraceML's profiling logs and reports (default: '.traceml_runs/')."
+        help="Root directory to save TraceML's profiling logs and reports (default: '.traceml_runs/').",
     )
 
     # This captures all remaining arguments after --log-dir etc.
     run_parser.add_argument(
-        '--args',
-        nargs=argparse.REMAINDER, # Capture all remaining arguments
-        help='Additional arguments to pass directly to the script being run.'
+        "--args",
+        nargs=argparse.REMAINDER,  # Capture all remaining arguments
+        help="Additional arguments to pass directly to the script being run.",
     )
 
     args = parser.parse_args()
@@ -168,7 +169,10 @@ def main():
         # Pass the training script's arguments separately
         script_args = args.args if args.args else []
         run_with_tracing(
-            args.script, interval=args.interval, log_dir=args.log_dir, script_args=script_args
+            args.script,
+            interval=args.interval,
+            log_dir=args.log_dir,
+            script_args=script_args,
         )
     else:
         parser.print_help()
