@@ -125,7 +125,7 @@ class LayerMemorySampler(BaseSampler):
         return {
             "total_models_seen": total_models,
             "total_samples_taken": self.total_samples,
-            "average_model_memory_mb": avg_total_memory,
-            "peak_model_memory_mb": max_total_memory,
+            "average_model_memory": avg_total_memory,
+            "peak_model_memory": max_total_memory,
             "last_model_snapshot": self._latest_snapshot,
         }
