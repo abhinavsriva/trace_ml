@@ -15,4 +15,4 @@ Training large machine learning models often feels like a black box. Most of the
 ## 📦 Installation
 
 ```bash
-pip install traceml
+pip install -e .
