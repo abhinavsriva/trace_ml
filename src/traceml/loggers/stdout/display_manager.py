@@ -11,6 +11,8 @@ import sys
 
 # Define constants for panel names to ensure consistency
 LIVE_METRICS_PANEL_NAME = "live_metrics"
+SYSTEM_PANEL_NAME = "system"
+PROCESS_PANEL_NAME = "process"
 CURRENT_MODEL_SUMMARY_PANEL_NAME = "current_model_summary"
 MODEL_SNAPSHOTS_TABLE_PANEL_NAME = "model_snapshots_table"
 
@@ -38,13 +40,22 @@ class StdoutDisplayManager:
         Defines the improved structure of the Rich Layout with flexible ratios.
         """
         cls._layout.split_column(
-            Layout(name=LIVE_METRICS_PANEL_NAME, size=5),
+            Layout(name=LIVE_METRICS_PANEL_NAME, size=3),
             # Layout(name=CURRENT_MODEL_SUMMARY_PANEL_NAME, ratio=2),
             # Layout(name=MODEL_SNAPSHOTS_TABLE_PANEL_NAME, ratio=3)
         )
 
-        cls._layout[LIVE_METRICS_PANEL_NAME].update(
-            Panel(Text("Initializing Live Metrics...", justify="center"))
+        cls._layout[LIVE_METRICS_PANEL_NAME].split_row(
+            Layout(name=SYSTEM_PANEL_NAME, ratio=1),
+            Layout(name=PROCESS_PANEL_NAME, ratio=1)
+        )
+
+        # Initialize panels with placeholder text
+        cls._layout[SYSTEM_PANEL_NAME].update(
+            Panel(Text("Waiting for System Metrics...", justify="center"))
+        )
+        cls._layout[PROCESS_PANEL_NAME].update(
+            Panel(Text("Waiting for Process Metrics...", justify="center"))
         )
         # cls._layout[CURRENT_MODEL_SUMMARY_PANEL_NAME].update(
         #     Panel(Text("Waiting for Model Data...", justify="center"))
