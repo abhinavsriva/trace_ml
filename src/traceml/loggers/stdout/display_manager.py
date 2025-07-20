@@ -37,20 +37,20 @@ class StdoutDisplayManager:
         Defines the improved structure of the Rich Layout with flexible ratios.
         """
         cls._layout.split_column(
-            Layout(name=LIVE_METRICS_PANEL_NAME, ratio=1),
-            Layout(name=CURRENT_MODEL_SUMMARY_PANEL_NAME, ratio=2),
-            Layout(name=MODEL_SNAPSHOTS_TABLE_PANEL_NAME, ratio=3)
+            Layout(name=LIVE_METRICS_PANEL_NAME, size=5),
+            # Layout(name=CURRENT_MODEL_SUMMARY_PANEL_NAME, ratio=2),
+            # Layout(name=MODEL_SNAPSHOTS_TABLE_PANEL_NAME, ratio=3)
         )
 
         cls._layout[LIVE_METRICS_PANEL_NAME].update(
             Panel(Text("Initializing Live Metrics...", justify="center"))
         )
-        cls._layout[CURRENT_MODEL_SUMMARY_PANEL_NAME].update(
-            Panel(Text("Waiting for Model Data...", justify="center"))
-        )
-        cls._layout[MODEL_SNAPSHOTS_TABLE_PANEL_NAME].update(
-            Panel(Text("No Layer Snapshots Yet...", justify="center"))
-        )
+        # cls._layout[CURRENT_MODEL_SUMMARY_PANEL_NAME].update(
+        #     Panel(Text("Waiting for Model Data...", justify="center"))
+        # )
+        # cls._layout[MODEL_SNAPSHOTS_TABLE_PANEL_NAME].update(
+        #     Panel(Text("No Layer Snapshots Yet...", justify="center"))
+        # )
 
     @classmethod
     def start_display(cls):
