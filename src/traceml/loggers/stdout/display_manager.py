@@ -34,23 +34,23 @@ class StdoutDisplayManager:
     @classmethod
     def _create_initial_layout(cls):
         """
-        Defines the in intial structure of the Rich Layout.
-        This sets up the "slots" where different loggers will render.
+        Defines the improved structure of the Rich Layout with flexible ratios.
         """
         cls._layout.split_column(
-            Layout(name=LIVE_METRICS_PANEL_NAME, size=3),
-            Layout(name="middle_section"),
-            Layout(name=MODEL_SNAPSHOTS_TABLE_PANEL_NAME, ratio=1)
-        )
-        cls._layout["middle_section"].split_column(
-            Layout(name=CURRENT_MODEL_SUMMARY_PANEL_NAME, size=5)
+            Layout(name=LIVE_METRICS_PANEL_NAME, ratio=1),
+            Layout(name=CURRENT_MODEL_SUMMARY_PANEL_NAME, ratio=2),
+            Layout(name=MODEL_SNAPSHOTS_TABLE_PANEL_NAME, ratio=3)
         )
 
-        # Initialize panels with placeholder content
-        cls._layout[LIVE_METRICS_PANEL_NAME].update(Panel(Text("Initializing Live Metrics...", justify="center")))
-        cls._layout[CURRENT_MODEL_SUMMARY_PANEL_NAME].update(Panel(Text("Waiting for Model Data...", justify="center")))
-        cls._layout[MODEL_SNAPSHOTS_TABLE_PANEL_NAME].update(Panel(Text("No Layer Snapshots Yet...", justify="center")))
-
+        cls._layout[LIVE_METRICS_PANEL_NAME].update(
+            Panel(Text("Initializing Live Metrics...", justify="center"))
+        )
+        cls._layout[CURRENT_MODEL_SUMMARY_PANEL_NAME].update(
+            Panel(Text("Waiting for Model Data...", justify="center"))
+        )
+        cls._layout[MODEL_SNAPSHOTS_TABLE_PANEL_NAME].update(
+            Panel(Text("No Layer Snapshots Yet...", justify="center"))
+        )
 
     @classmethod
     def start_display(cls):
@@ -94,7 +94,7 @@ class StdoutDisplayManager:
         Registers a function that provides content for a specific layout panel.
         """
         with cls._lock:
-            if panel_name not in cls._layout.keys():
+            if cls._layout.get(panel_name) is None:
                 print(f"[TraceML] WARNING: Layout panel '{panel_name}' not found. Cannot register content.", file=sys.stderr)
                 return
             cls._panel_content_fns[panel_name] = content_fn
