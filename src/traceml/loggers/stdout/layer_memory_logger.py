@@ -84,15 +84,6 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
         )
 
     def log_summary(self, summary: Dict[str, Any]):
-        # """
-        # Print final summary to console after display stops.
-        # """
-        # print(f"\n[TraceML][{self.name}] Final Summary:")
-        # print(f"  Total Models Seen: {summary.get('total_models_seen', 0)}")
-        # print(f"  Total Samples Taken: {summary.get('total_samples_taken', 0)}")
-        # print(f"  Average Model Memory (MB): {summary.get('average_model_memory_mb', 0.0):.2f}")
-        # print(f"  Peak Model Memory (MB): {summary.get('peak_model_memory_mb', 0.0):.2f}")
-        # print("-" * 40)
         """
         Logs the final summary using Rich.
         Should be called after Rich Live display has stopped.
