@@ -3,6 +3,7 @@ from rich.panel import Panel
 from rich.align import Align
 from rich.table import Table
 from typing import Dict, Any
+from rich.console import Console
 
 import psutil
 
@@ -58,14 +59,25 @@ class ProcessStdoutLogger(BaseStdoutLogger):
 
     def log_summary(self, summary: Dict[str, Any]):
         """
-        Logs the final process-level resource summary after the live display.
+        Logs the final summary.
+        Should be called after Rich Live display has stopped.
         """
-        print(f"\n[TraceML][{self.name}] Final Summary:")
+        console = Console()
+
+        table = Table.grid(padding=(0, 1))
+        table.add_column(justify="left", style="bold cyan")
+        table.add_column(justify="center", style="dim", no_wrap=True)
+        table.add_column(justify="right", style="bold white")
+
         for key, value in summary.items():
+            display_key = key.replace('_', ' ').upper()
             if "percent" in key:
-                print(f"  {key.replace('_', ' ').title()}: {value:.1f}%")
-            elif "_mb" in key:
-                print(f"  {key.replace('_', ' ').title()}: {value:.2f} MB")
+                display_value = f"{value:.1f}%"
+            elif "ram" in key or "_mb" in key:
+                display_value = f"{value:.2f} MB"
             else:
-                print(f"  {key.replace('_', ' ').title()}: {value}")
-        print("-" * 40)
+                display_value = str(value)
+            table.add_row(display_key, "[cyan]|[/cyan]", display_value)
+
+        panel = Panel(table, title=f"[bold cyan]{self.name} - Final Summary", border_style="cyan")
+        console.print(panel)

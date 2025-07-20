@@ -28,13 +28,13 @@ class LayerMemorySampler(BaseSampler):
             try:
                 if isinstance(obj, torch.nn.Module):
                     param_count = sum(p.numel() for p in obj.parameters())
-                    candidates.append((param_count, obj))
+                    candidates.append((param_count, id(obj), obj))
             except Exception:
                 continue
 
         if candidates:
             candidates.sort(reverse=True)
-            return candidates[0][1]
+            return candidates[0][2]
         return None
 
     def _get_model_signature(self, model: torch.nn.Module) -> Tuple:

@@ -32,7 +32,6 @@ class TrackerManager:
         """
         while not self._stop_event.is_set():
             for sampler, loggers in self.components:
-                snapshot: Dict[str, Any] = {}
                 try:
                     snapshot = sampler.sample()
                 except Exception as e:

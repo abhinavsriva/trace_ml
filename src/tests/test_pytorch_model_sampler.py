@@ -13,7 +13,6 @@ from traceml.manager.tracker_manager import TrackerManager
 from traceml.loggers.stdout.system_logger import SystemStdoutLogger
 from traceml.loggers.stdout.process_logger import ProcessStdoutLogger
 from traceml.loggers.stdout.layer_memory_logger import LayerMemoryStdoutLogger
-from traceml.loggers.stdout.display_manager import StdoutDisplayManager
 
 
 class SimpleMLP(nn.Module):
@@ -93,9 +92,8 @@ def test_system_sampler_with_pytorch_model():
     finally:
         tracker.stop()
         tracker.log_summaries()
-        StdoutDisplayManager.stop_display()
 
-    print(f"\n[TraceML Test] PyTorch model memory tracking test passed successfully for {test_id}.", file=sys.stderr)
+    print(f"\n[TraceML Test] PyTorch model memory tracking test passed successfully.", file=sys.stderr)
 
 
 if __name__ == "__main__":

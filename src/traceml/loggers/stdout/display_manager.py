@@ -36,6 +36,7 @@ class StdoutDisplayManager:
 
     # For thread safety if multiple threads update _panel_content_fns
     _lock = threading.Lock()
+    _active_logger_count: int = 0
 
     @classmethod
     def _create_initial_layout(cls):
@@ -71,7 +72,7 @@ class StdoutDisplayManager:
     def start_display(cls):
         """Starts the shared Rich Live display if not already running."""
         with cls._lock:
-            if cls._live_display is None:
+            if cls._active_logger_count == 0:
                 cls._create_initial_layout()
                 cls._live_display = Live(
                     cls._layout,
@@ -90,22 +91,33 @@ class StdoutDisplayManager:
                     )
                     cls._live_display = None  # Reset if failed to start
 
+            cls._active_logger_count += 1
+
     @classmethod
     def stop_display(cls):
         """Stops the shared Rich Live display."""
+        if cls._live_display:
+            try:
+                cls._live_display.stop()
+            except Exception as e:
+                print(
+                    f"[TraceML] Error stopping live display: {e}", file=sys.stderr
+                )
+            finally:
+                cls._live_display = None
+                cls._layout_content_fns.clear()
+                # Re-initialize layout to reset state for next run
+                cls._layout = Layout(name=ROOT_LAYOUT_NAME)
+                print("[TraceML] Rich live display stopped.", file=sys.stderr)
+
+    @classmethod
+    def release_display(cls):
+        """Decrements active logger count and stops display if none remain."""
         with cls._lock:
-            if cls._live_display:
-                try:
-                    cls._live_display.stop()
-                except Exception as e:
-                    print(
-                        f"[TraceML] Error stopping live display: {e}", file=sys.stderr
-                    )
-                finally:
-                    cls._live_display = None
-                    cls._layout_content_fns.clear()
-                    # Re-initialize layout to reset state for next run
-                    cls._layout = Layout(name=ROOT_LAYOUT_NAME)
+            cls._active_logger_count = max(cls._active_logger_count - 1, 0)
+
+            if cls._active_logger_count == 0:
+                cls.stop_display()
 
     @classmethod
     def register_layout_content(cls, layout_section: str, content_fn: Callable[[], Any]):
