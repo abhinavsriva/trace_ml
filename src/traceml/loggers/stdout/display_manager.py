@@ -34,16 +34,16 @@ class StdoutDisplayManager:
     @classmethod
     def _create_initial_layout(cls):
         """
-        Defines the initial structure of the Rich Layout.
+        Defines the in intial structure of the Rich Layout.
         This sets up the "slots" where different loggers will render.
         """
         cls._layout.split_column(
-            Layout(name=LIVE_METRICS_PANEL_NAME, size=3), # Fixed height for top line
+            Layout(name=LIVE_METRICS_PANEL_NAME, size=3),
             Layout(name="middle_section"),
-            Layout(name=MODEL_SNAPSHOTS_TABLE_PANEL_NAME, ratio=1) # Takes remaining space, grows
+            Layout(name=MODEL_SNAPSHOTS_TABLE_PANEL_NAME, ratio=1)
         )
         cls._layout["middle_section"].split_column(
-            Layout(name=CURRENT_MODEL_SUMMARY_PANEL_NAME, size=5) # Fixed height for current model summary
+            Layout(name=CURRENT_MODEL_SUMMARY_PANEL_NAME, size=5)
         )
 
         # Initialize panels with placeholder content

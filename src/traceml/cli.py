@@ -7,7 +7,7 @@ import traceback
 
 
 from traceml.samplers.system_sampler import SystemSampler
-from traceml.loggers.json.system_logger import SystemJSONLogger
+# from traceml.loggers.json.system_logger import SystemJSONLogger
 from traceml.loggers.stdout.system_logger import SystemStdoutLogger
 
 from traceml.manager.tracker_manager import TrackerManager
@@ -51,7 +51,7 @@ def run_with_tracing(
     system_sampler = SystemSampler()
 
     # jSON loggers
-    system_json_logger = SystemJSONLogger(os.path.join(log_dir, "cpu_metrics"))
+    # system_json_logger = SystemJSONLogger(os.path.join(log_dir, "cpu_metrics"))
 
     # stdout loggers (on terminal info)
     system_stdout_logger = SystemStdoutLogger()
@@ -59,7 +59,7 @@ def run_with_tracing(
     # Collect all trackers
     sampler_logger_pairs = [
         # (system_sampler, system_json_logger),
-        (system_sampler, system_stdout_logger),
+        (system_sampler, [system_stdout_logger]),
     ]
 
     tracker = TrackerManager(sampler_logger_pairs, interval_sec=interval)

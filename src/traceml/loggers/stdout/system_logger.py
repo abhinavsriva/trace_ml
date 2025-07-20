@@ -36,7 +36,6 @@ class SystemStdoutLogger(BaseStdoutLogger):
         table = Table(box=None, show_header=False, padding=(0, 2))
         table.add_column(justify="center", style="bold green")
         table.add_column(justify="center", style="bold blue")
-        table.add_column(justify="center", style="bold magenta")
         table.add_row(
             f"CPU: {cpu_val:.1f}%",
             f"RAM: {ram_display_str}"
