@@ -7,7 +7,7 @@ from typing import Dict, Any
 import psutil
 
 from .base_logger import BaseStdoutLogger
-from .display_manager import PROCESS_PANEL_NAME
+from .display_manager import PROCESS_LAYOUT_NAME
 
 class ProcessStdoutLogger(BaseStdoutLogger):
     """
@@ -16,7 +16,7 @@ class ProcessStdoutLogger(BaseStdoutLogger):
     """
 
     def __init__(self):
-        super().__init__(name="Process", panel_name=PROCESS_PANEL_NAME)
+        super().__init__(name="Process", layout_section_name=PROCESS_LAYOUT_NAME)
 
         self._latest_data = {
             "process_cpu_percent": 0.0,
@@ -60,7 +60,7 @@ class ProcessStdoutLogger(BaseStdoutLogger):
         """
         Logs the final process-level resource summary after the live display.
         """
-        print("\n[TraceML][Process] Final Summary:")
+        print(f"\n[TraceML][{self.name}] Final Summary:")
         for key, value in summary.items():
             if "percent" in key:
                 print(f"  {key.replace('_', ' ').title()}: {value:.1f}%")

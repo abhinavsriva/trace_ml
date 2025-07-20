@@ -7,7 +7,9 @@ from sklearn.linear_model import LinearRegression
 
 from traceml.samplers.process_sampler import ProcessSampler
 from traceml.samplers.system_sampler import SystemSampler
+
 from traceml.manager.tracker_manager import TrackerManager
+
 from traceml.loggers.stdout.system_logger import SystemStdoutLogger
 from traceml.loggers.stdout.process_logger import ProcessStdoutLogger
 from traceml.loggers.stdout.display_manager import StdoutDisplayManager
@@ -18,22 +20,10 @@ def test_system_sampler_with_heavy_task():
     Tests SystemSampler (CPU and RAM) with a CPU-intensive linear regression workload.
     Validates that logs are created and contain valid system metrics.
     """
-    test_id = f"test_system_sampler_{int(time.time())}"  # Unique ID for this test run
-    log_dir = os.path.join("traceml_logs", test_id)  # Unique directory for this test
-
-    # Clean up previous test logs if they exist
-    if os.path.exists(log_dir):
-        shutil.rmtree(log_dir)
-    os.makedirs(log_dir, exist_ok=True)
-
-    print(
-        f"\n[TraceML Test] Starting test: {test_id}. Logs in: {log_dir}",
-        file=sys.stderr,
-    )
-
     # Initialize samplers and loggers
     system_sampler = SystemSampler()
     process_sampler = ProcessSampler()
+
     system_stdout_logger = SystemStdoutLogger()
     process_stdout_logger = ProcessStdoutLogger()
 

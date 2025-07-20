@@ -12,15 +12,15 @@ class BaseStdoutLogger:
     providing data for a specific part of the shared display.
     """
 
-    def __init__(self, name: str, panel_name: str):
+    def __init__(self, name: str, layout_section_name: str):
         self.name = name
-        self.panel_name = panel_name
+        self.layout_section_name = layout_section_name
         self._latest_data: Dict[str, Any] = {}
 
         # Ensure display is started and register this logger's content function
         StdoutDisplayManager.start_display()
-        StdoutDisplayManager.register_panel_content(
-            self.panel_name, self._get_panel_renderable
+        StdoutDisplayManager.register_layout_content(
+            self.layout_section_name, self._get_panel_renderable
         )
 
     def _get_panel_renderable(self) -> Any:  # This will be implemented by subclasses
