@@ -5,7 +5,7 @@ from rich.table import Table
 from typing import Dict, Any
 
 from .base_logger import BaseStdoutLogger
-from .display_manager import SYSTEM_PANEL_NAME
+from .display_manager import SYSTEM_LAYOUT_NAME
 
 
 class SystemStdoutLogger(BaseStdoutLogger):
@@ -15,7 +15,7 @@ class SystemStdoutLogger(BaseStdoutLogger):
     """
 
     def __init__(self):
-        super().__init__(name="System", panel_name=SYSTEM_PANEL_NAME)
+        super().__init__(name="System", layout_section_name=SYSTEM_LAYOUT_NAME)
         # Initialize default values for the live metrics panel
         self._latest_data = {
             "cpu_percent": 0.0,
@@ -51,7 +51,7 @@ class SystemStdoutLogger(BaseStdoutLogger):
         Logs the final System (CPU/RAM) summary to the console after the live display stops.
         """
         # The live display is managed by the manager, so this is for post-mortem logging
-        print("\n[TraceML][System] Final Summary:")
+        print(f"\n[TraceML][{self.name}] Final Summary:")
         for key, value in summary.items():
             if "percent" in key:
                 print(f"  {key.replace('_', ' ').title()}: {value:.1f}%")

@@ -9,12 +9,15 @@ from typing import Dict, Any, Callable, Optional, List
 import threading
 import sys
 
-# Define constants for panel names to ensure consistency
-LIVE_METRICS_PANEL_NAME = "live_metrics"
-SYSTEM_PANEL_NAME = "system"
-PROCESS_PANEL_NAME = "process"
-CURRENT_MODEL_SUMMARY_PANEL_NAME = "current_model_summary"
-MODEL_SNAPSHOTS_TABLE_PANEL_NAME = "model_snapshots_table"
+
+# Layout section names
+ROOT_LAYOUT_NAME = "root"
+LIVE_METRICS_LAYOUT_NAME = "live_metrics_section"
+SYSTEM_LAYOUT_NAME = "system_metrics_section"
+PROCESS_LAYOUT_NAME = "process_metrics_section"
+MODEL_SUMMARY_LAYOUT_NAME = "current_model_summary_section"
+MODEL_HISTORY_LAYOUT_NAME = "model_snapshots_section"
+
 
 
 class StdoutDisplayManager:
@@ -24,12 +27,12 @@ class StdoutDisplayManager:
 
     _console: Console = Console()
     _live_display: Optional[Live] = None
-    _layout: Layout = Layout(name="root")
+    _layout: Layout = Layout(name=ROOT_LAYOUT_NAME)
 
     # Registry for functions that generate content for specific layout sections
     # Key: layout_panel_name (e.g., "live_metrics")
     # Value: Callable[[], Renderable] - a function that returns the latest renderable for that panel
-    _panel_content_fns: Dict[str, Callable[[], Any]] = {}
+    _layout_content_fns: Dict[str, Callable[[], Any]] = {}
 
     # For thread safety if multiple threads update _panel_content_fns
     _lock = threading.Lock()
@@ -40,29 +43,29 @@ class StdoutDisplayManager:
         Defines the improved structure of the Rich Layout with flexible ratios.
         """
         cls._layout.split_column(
-            Layout(name=LIVE_METRICS_PANEL_NAME, size=3),
-            # Layout(name=CURRENT_MODEL_SUMMARY_PANEL_NAME, ratio=2),
-            # Layout(name=MODEL_SNAPSHOTS_TABLE_PANEL_NAME, ratio=3)
+            Layout(name=LIVE_METRICS_LAYOUT_NAME, size=3),
+            Layout(name=MODEL_SUMMARY_LAYOUT_NAME, ratio=2),
+            Layout(name=MODEL_HISTORY_LAYOUT_NAME, ratio=3)
         )
 
-        cls._layout[LIVE_METRICS_PANEL_NAME].split_row(
-            Layout(name=SYSTEM_PANEL_NAME, ratio=1),
-            Layout(name=PROCESS_PANEL_NAME, ratio=1)
+        cls._layout[LIVE_METRICS_LAYOUT_NAME].split_row(
+            Layout(name=SYSTEM_LAYOUT_NAME, ratio=1),
+            Layout(name=PROCESS_LAYOUT_NAME, ratio=1)
         )
 
         # Initialize panels with placeholder text
-        cls._layout[SYSTEM_PANEL_NAME].update(
+        cls._layout[SYSTEM_LAYOUT_NAME].update(
             Panel(Text("Waiting for System Metrics...", justify="center"))
         )
-        cls._layout[PROCESS_PANEL_NAME].update(
+        cls._layout[PROCESS_LAYOUT_NAME].update(
             Panel(Text("Waiting for Process Metrics...", justify="center"))
         )
-        # cls._layout[CURRENT_MODEL_SUMMARY_PANEL_NAME].update(
-        #     Panel(Text("Waiting for Model Data...", justify="center"))
-        # )
-        # cls._layout[MODEL_SNAPSHOTS_TABLE_PANEL_NAME].update(
-        #     Panel(Text("No Layer Snapshots Yet...", justify="center"))
-        # )
+        cls._layout[MODEL_SUMMARY_LAYOUT_NAME].update(
+            Panel(Text("Waiting for Current Model...", justify="center"))
+        )
+        cls._layout[MODEL_HISTORY_LAYOUT_NAME].update(
+            Panel(Text("No Model Snapshots Yet...", justify="center"))
+        )
 
     @classmethod
     def start_display(cls):
@@ -100,23 +103,23 @@ class StdoutDisplayManager:
                     )
                 finally:
                     cls._live_display = None
-                    cls._panel_content_fns.clear()
+                    cls._layout_content_fns.clear()
                     # Re-initialize layout to reset state for next run
-                    cls._layout = Layout(name="root")
+                    cls._layout = Layout(name=ROOT_LAYOUT_NAME)
 
     @classmethod
-    def register_panel_content(cls, panel_name: str, content_fn: Callable[[], Any]):
+    def register_layout_content(cls, layout_section: str, content_fn: Callable[[], Any]):
         """
         Registers a function that provides content for a specific layout panel.
         """
         with cls._lock:
-            if cls._layout.get(panel_name) is None:
+            if cls._layout.get(layout_section) is None:
                 print(
-                    f"[TraceML] WARNING: Layout panel '{panel_name}' not found. Cannot register content.",
+                    f"[TraceML] WARNING: Layout panel '{layout_section}' not found. Cannot register content.",
                     file=sys.stderr,
                 )
                 return
-            cls._panel_content_fns[panel_name] = content_fn
+            cls._layout_content_fns[layout_section] = content_fn
 
     @classmethod
     def update_display(cls):
@@ -133,20 +136,20 @@ class StdoutDisplayManager:
                 return  # For now, just exit if live display isn't running
 
             try:
-                for panel_name, content_fn in cls._panel_content_fns.items():
+                for section_name, content_fn in cls._layout_content_fns.items():
                     try:
                         renderable = content_fn()
                         if renderable is not None:
-                            cls._layout[panel_name].update(renderable)
+                            cls._layout[section_name].update(renderable)
                     except Exception as e:
                         error_panel = Panel(
-                            f"[red]Error rendering {panel_name}: {e}[/red]",
-                            title=f"[bold red]Render Error: {panel_name}[/bold red]",
+                            f"[red]Error rendering {section_name}: {e}[/red]",
+                            title=f"[bold red]Render Error: {section_name}[/bold red]",
                             border_style="red",
                         )
-                        cls._layout[panel_name].update(error_panel)
+                        cls._layout[section_name].update(error_panel)
                         print(
-                            f"[TraceML] Error in rendering content for panel {panel_name}: {e}",
+                            f"[TraceML] Error in rendering content for panel {section_name}: {e}",
                             file=sys.stderr,
                         )
 
