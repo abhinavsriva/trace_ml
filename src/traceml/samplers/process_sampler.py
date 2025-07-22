@@ -91,13 +91,13 @@ class ProcessSampler(BaseSampler):
                 summary["cpu_peak_percent"] = 0.0
 
             if self.ram_samples_mb:
-                summary["ram_average_mb"] = round(
+                summary["ram_average"] = round(
                     sum(self.ram_samples_mb) / len(self.ram_samples_mb), 2
                 )
-                summary["ram_peak_mb"] = round(max(self.ram_samples_mb), 2)
+                summary["ram_peak"] = round(max(self.ram_samples_mb), 2)
             else:
-                summary["ram_average_mb"] = 0.0
-                summary["ram_peak_mb"] = 0.0
+                summary["ram_average"] = 0.0
+                summary["ram_peak"] = 0.0
 
             summary["total_process_samples"] = len(self.cpu_samples)
 

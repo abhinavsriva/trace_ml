@@ -51,4 +51,5 @@ class BaseStdoutLogger:
         Performs any specific shutdown for this logger.
         The main live display is stopped globally by the TrackerManager.
         """
-        pass  # Override in subclasses if specific cleanup is needed
+        StdoutDisplayManager.release_display()
+        print(f"[TraceML][{self.name}] Logger shutdown complete, {StdoutDisplayManager._active_logger_count} Loggers left.")
