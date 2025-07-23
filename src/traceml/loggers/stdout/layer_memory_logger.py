@@ -1,6 +1,7 @@
 from rich.panel import Panel
 from rich.table import Table
 from rich.console import Group
+from rich.console import Console
 from typing import Dict, Any, List
 
 from .base_logger import BaseStdoutLogger
@@ -83,12 +84,41 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
         )
 
     def log_summary(self, summary: Dict[str, Any]):
+        # """
+        # Print final summary to console after display stops.
+        # """
+        # print(f"\n[TraceML][{self.name}] Final Summary:")
+        # print(f"  Total Models Seen: {summary.get('total_models_seen', 0)}")
+        # print(f"  Total Samples Taken: {summary.get('total_samples_taken', 0)}")
+        # print(f"  Average Model Memory (MB): {summary.get('average_model_memory_mb', 0.0):.2f}")
+        # print(f"  Peak Model Memory (MB): {summary.get('peak_model_memory_mb', 0.0):.2f}")
+        # print("-" * 40)
         """
-        Print final summary to console after display stops.
+        Logs the final summary using Rich.
+        Should be called after Rich Live display has stopped.
         """
-        print(f"\n[TraceML][{self.name}] Final Summary:")
-        print(f"  Total Models Seen: {summary.get('total_models_seen', 0)}")
-        print(f"  Total Samples Taken: {summary.get('total_samples_taken', 0)}")
-        print(f"  Average Model Memory (MB): {summary.get('average_model_memory_mb', 0.0):.2f}")
-        print(f"  Peak Model Memory (MB): {summary.get('peak_model_memory_mb', 0.0):.2f}")
-        print("-" * 40)
+        console = Console()
+
+        table = Table.grid(padding=(0, 1))
+        table.add_column(justify="left", style="bold magenta3")
+        table.add_column(justify="center", style="dim", no_wrap=True)
+        table.add_column(justify="right", style="bold white")
+
+        keys_to_display = [
+            "total_models_seen",
+            "total_samples_taken",
+            "average_model_memory_mb",
+            "peak_model_memory_mb"
+        ]
+
+        for key in keys_to_display:
+            value = summary.get(key, 0)
+            display_key = key.replace('_', ' ').upper()
+            if "memory" in key:
+                display_value = f"{value:.2f} MB"
+            else:
+                display_value = str(value)
+            table.add_row(display_key, "[magenta3]|[/magenta3]", display_value)
+
+        panel = Panel(table, title=f"[bold magenta3]{self.name} - Final Summary", border_style="magenta3")
+        console.print(panel)
