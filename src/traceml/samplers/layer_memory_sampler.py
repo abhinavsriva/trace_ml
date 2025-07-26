@@ -8,10 +8,24 @@ from src.traceml.decorator import get_model_queue
 
 class LayerMemorySampler(BaseSampler):
     """
-    Sampler that automatically tracks per-layer parameter memory usage of
-    PyTorch models. Uses a queue-based model tracing system if active;
-    falls back to GC scanning otherwise. Maintains a history of unique model
-    signatures to avoid duplicate sampling.
+    A memory sampler that tracks parameter memory usage of PyTorch models at a per-layer level.
+    This sampler operates in two modes:
+
+    1. **Queue-based Sampling** (Preferred):
+       If models are explicitly queued using the `@trace_model` decorator or the `trace__model()` function,
+       this sampler will iterate over the queue and analyze each queued model without removing them.
+       It ensures that each unique model (based on parameter signature) is only sampled once.
+
+    2. **GC-based Fallback**:
+       If the queue is empty (i.e., decorators are not used), the sampler will scan all live objects
+       in memory using Python's garbage collector to find the largest `nn.Module` instance.
+       This fallback helps default structure
+
+    In both modes, a unique signature for each model is generated based on the shape of its parameters.
+    This ensures deduplication and prevents redundant memory profiling.
+
+    Memory usage is calculated per layer and aggregated to provide total memory footprint in megabytes (MB).
+    Sampled snapshots are stored for historical tracking and summary reporting.
     """
 
     def __init__(self):
