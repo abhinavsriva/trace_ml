@@ -3,10 +3,19 @@ import sys
 from typing import List, Optional, Dict, Any
 from .base_sampler import BaseSampler
 
+from pynvml import (
+    nvmlInit,
+    nvmlShutdown,
+    nvmlDeviceGetHandleByIndex,
+    nvmlDeviceGetMemoryInfo,
+    nvmlDeviceGetUtilizationRates,
+    nvmlDeviceGetCount,
+    NVMLError,
+)
 
 class SystemSampler(BaseSampler):
     """
-    Sampler that tracks CPU and RAM usage over time using psutil.
+    Sampler that tracks CPU RAM and GPU usage over time using psutil.
     Collects usage percentages periodically and exposes live snapshots
     and statistical summaries.
 
@@ -33,13 +42,23 @@ class SystemSampler(BaseSampler):
         self.ram_used_samples: List[float] = []
         self.ram_available_samples: List[float] = []
         self.ram_total_samples: List[float] = []
-        self._latest_snapshot: Dict[str, Any] = {
-            "cpu_percent": 0.0,
-            "ram_percent_used": 0.0,
-            "ram_used_gb": 0.0,
-            "ram_available_gb": 0.0,
-            "ram_total_gb": 0.0,
-        }
+
+        self.gpu_util_samples: List[float] = []
+        self.gpu_mem_used_samples: List[float] = []
+        self.gpu_mem_total_samples: List[float] = []
+
+        # GPU setup
+        self.gpu_available = False
+        self.gpu_count = 0
+        try:
+            nvmlInit()
+            self.gpu_count = nvmlDeviceGetCount()
+            self.gpu_available = True
+        except NVMLError as e:
+            print(f"[TraceML] WARNING: GPU not available: {e}", file=sys.stderr)
+
+        self._latest_snapshot: Dict[str, Any] = {}
+
 
     def sample(self) -> Dict[str, Any]:
         """
