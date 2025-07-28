@@ -207,11 +207,3 @@ class SystemSampler(BaseSampler):
                 "total_system_samples": 0,
             }
 
-
-    def __del__(self):
-        """ Safe shutdown"""
-        if self.gpu_available:
-            try:
-                nvmlShutdown()
-            except Exception:
-                pass

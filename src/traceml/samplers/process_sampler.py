@@ -1,8 +1,18 @@
 import psutil
 import os
 import sys
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from .base_sampler import BaseSampler
+
+from pynvml import (
+    nvmlInit,
+    nvmlShutdown,
+    nvmlDeviceGetHandleByIndex,
+    nvmlDeviceGetProcessUtilization,
+    nvmlDeviceGetComputeRunningProcesses,
+    nvmlDeviceGetCount,
+    NVMLError,
+)
 
 
 class ProcessSampler(BaseSampler):
@@ -22,12 +32,10 @@ class ProcessSampler(BaseSampler):
         # Sampling history
         self.cpu_samples: List[float] = []
         self.ram_samples_mb: List[float] = []
+        self.gpu_mem_samples_mb: List[float] = []
 
-        # Latest snapshot
-        self._latest_snapshot: Dict[str, Any] = {
-            "process_cpu_percent": 0.0,
-            "process_ram_mb": 0.0,
-        }
+        self.gpu_available = False
+        self.gpu_count = 0
 
         # Prime CPU usage measurement
         try:
@@ -37,6 +45,17 @@ class ProcessSampler(BaseSampler):
                 f"[TraceML] WARNING: process.cpu_percent() initial call failed: {e}",
                 file=sys.stderr,
             )
+        # GPU Tracking
+        try:
+            nvmlInit()
+            self.gpu_count = nvmlDeviceGetCount()
+            self.gpu_available = True
+        except NVMLError as e:
+            print(f"[TraceML] WARNING: NVML GPU support unavailable: {e}", file=sys.stderr)
+
+        # Latest snapshot
+        self._latest_snapshot: Dict[str, Any] = {}
+
 
     def sample(self) -> Dict[str, Any]:
         """
