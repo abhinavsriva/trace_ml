@@ -161,7 +161,6 @@ class SystemSampler(BaseSampler):
         """
         Compute and return summary statistics for CPU and RAM usage over the sampling period.
         """
-        summary: Dict[str, Any] = {}
         try:
             summary = {
                 "total_system_samples": len(self.cpu_samples),
@@ -172,13 +171,13 @@ class SystemSampler(BaseSampler):
                     sum(self.ram_percent_samples) / len(self.ram_percent_samples),2) if self.ram_percent_samples else 0.0,
                 "ram_peak_percent_used": round(
                     max(self.ram_percent_samples), 2) if self.ram_percent_samples else 0.0,
-                "ram_average_used_mb": round(
+                "ram_average_used": round(
                     sum(self.ram_used_samples) / len(self.ram_used_samples), 2) if self.ram_used_samples else 0.0,
-                "ram_peak_used_mb": round(
+                "ram_peak_used": round(
                     max(self.ram_used_samples), 2) if self.ram_used_samples else 0.0,
-                "ram_average_available_mb": round(
+                "ram_average_available": round(
                     sum(self.ram_available_samples) / len(self.ram_available_samples),2) if self.ram_available_samples else 0.0,
-                "ram_min_available_mb": round(
+                "ram_min_available": round(
                     min(self.ram_available_samples),2) if self.ram_available_samples else 0.0,
                 "ram_total_mb": round(self.ram_total_samples[0], 2) if self.ram_total_samples else 0.0,
             }
@@ -187,18 +186,18 @@ class SystemSampler(BaseSampler):
                 summary.update({
                     "gpu_average_util_percent": round(sum(self.gpu_util_samples) / len(self.gpu_util_samples), 2),
                     "gpu_peak_util_percent": round(max(self.gpu_util_samples), 2),
-                    "gpu_average_memory_used_mb": round(sum(self.gpu_mem_used_samples) / len(self.gpu_mem_used_samples),
+                    "gpu_average_memory_used": round(sum(self.gpu_mem_used_samples) / len(self.gpu_mem_used_samples),
                                                         2),
-                    "gpu_peak_memory_used_mb": round(max(self.gpu_mem_used_samples), 2),
-                    "gpu_memory_total_mb": round(self.gpu_mem_total_samples[0], 2),
+                    "gpu_peak_memory_used": round(max(self.gpu_mem_used_samples), 2),
+                    "gpu_memory_total": round(self.gpu_mem_total_samples[0], 2),
                 })
             else:
                 summary.update({
                     "gpu_average_util_percent": 0.0,
                     "gpu_peak_util_percent": 0.0,
-                    "gpu_average_memory_used_mb": 0.0,
-                    "gpu_peak_memory_used_mb": 0.0,
-                    "gpu_memory_total_mb": 0.0,
+                    "gpu_average_memory_used": 0.0,
+                    "gpu_peak_memory_used": 0.0,
+                    "gpu_memory_total": 0.0,
                 })
             return summary
         except Exception as e:
