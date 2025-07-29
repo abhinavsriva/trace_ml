@@ -12,7 +12,7 @@ from .display_manager import PROCESS_LAYOUT_NAME
 
 class ProcessStdoutLogger(BaseStdoutLogger):
     """
-    Stdout logger for Process-level (self PID) CPU and RAM usage metrics.
+    Stdout logger for Process-level (self PID) CPU, RAM and GPU usage metrics.
     Displays live resource usage of your TraceML + training script process.
     """
 
@@ -22,6 +22,7 @@ class ProcessStdoutLogger(BaseStdoutLogger):
         self._latest_data = {
             "process_cpu_percent": 0.0,
             "process_ram_mb": 0.0,
+            "process_gpu_mem_mb": None
         }
 
         # Detect system CPU topology at logger initialization
@@ -40,6 +41,7 @@ class ProcessStdoutLogger(BaseStdoutLogger):
         """
         cpu_val = self._latest_data.get("process_cpu_percent", 0.0)
         ram_val = self._latest_data.get("process_ram_mb", 0.0)
+        gpu_mem = self._latest_data.get("process_gpu_memory_mb")
 
         cpu_display_str = f"CPU ({self.logical_cores} cores): {cpu_val:.1f}%"
         ram_display_str = f"RAM: {ram_val:.0f}MB"
@@ -48,6 +50,9 @@ class ProcessStdoutLogger(BaseStdoutLogger):
         table.add_column(justify="center", style="bold magenta")
         table.add_column(justify="center", style="bold cyan")
         table.add_row(cpu_display_str, ram_display_str)
+        if gpu_mem is not None:
+            gpu_display_str = f"GPU Memory: {gpu_mem:.0f}MB"
+            table.add_row("", gpu_display_str)
 
         return Panel(
             table,
@@ -73,7 +78,7 @@ class ProcessStdoutLogger(BaseStdoutLogger):
             display_key = key.replace('_', ' ').upper()
             if "percent" in key:
                 display_value = f"{value:.1f}%"
-            elif "ram" in key or "_mb" in key:
+            elif "ram" in key or "gpu" in key:
                 display_value = f"{value:.2f} MB"
             else:
                 display_value = str(value)
