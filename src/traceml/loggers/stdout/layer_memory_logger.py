@@ -63,36 +63,41 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
 
     def _get_history_renderable(self) -> Panel:
         """
-        Scrollable history of previously discovered models.
+        Scrollable history of previously discovered models,
+        each displayed as a separate panel like the live model.
         """
-        table = Table(show_header=True, header_style="bold green", box=None)
-        table.add_column("Index", justify="right")
-        table.add_column("Total MB", justify="right")
-        table.add_column("Signature", justify="left")
+        panels = []
 
-        for snapshot in reversed(self._history_snapshots[-20:]):  # Show last 20 models
+        for snapshot in reversed(self._history_snapshots[-20:]):  # Last 20 models
             index = snapshot.get("model_index", "n/a")
             total_mb = snapshot.get("total_memory_mb", 0.0)
-            sig = snapshot.get("model_signature", "")[:30] + "..." if snapshot.get("model_signature") else ""
-            table.add_row(str(index), f"{total_mb:.2f}", sig)
+            layer_data = snapshot.get("layer_memory_mb", {})
+            signature = snapshot.get("model_signature", "")[:50]
+
+            table = Table(show_header=True, header_style="bold magenta", box=None, expand=True)
+            table.add_column("Layer", justify="left")
+            table.add_column("Memory (MB)", justify="right")
+
+            for layer_name, mem_mb in layer_data.items():
+                table.add_row(layer_name, f"{mem_mb:.4f}")
+
+            panel = Panel(
+                table,
+                title=f"Model #{index} – Total: {total_mb:.2f} MB",
+                subtitle=f"[dim]Signature: {signature}",
+                border_style="cyan",
+                width=80
+            )
+            panels.append(panel)
 
         return Panel(
-            Group(table),
+            Group(*panels, "\n"),
             title="Model Snapshots (Recent 20)",
             border_style="dim white",
             width=120
         )
 
     def log_summary(self, summary: Dict[str, Any]):
-        # """
-        # Print final summary to console after display stops.
-        # """
-        # print(f"\n[TraceML][{self.name}] Final Summary:")
-        # print(f"  Total Models Seen: {summary.get('total_models_seen', 0)}")
-        # print(f"  Total Samples Taken: {summary.get('total_samples_taken', 0)}")
-        # print(f"  Average Model Memory (MB): {summary.get('average_model_memory_mb', 0.0):.2f}")
-        # print(f"  Peak Model Memory (MB): {summary.get('peak_model_memory_mb', 0.0):.2f}")
-        # print("-" * 40)
         """
         Logs the final summary using Rich.
         Should be called after Rich Live display has stopped.

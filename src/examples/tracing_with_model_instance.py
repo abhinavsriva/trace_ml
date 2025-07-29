@@ -1,9 +1,7 @@
-# simple_training.py
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import time
-import sys
+from traceml.decorator import trace_model_instance
 
 
 # Define a simple CNN model
@@ -41,6 +39,10 @@ def main():
 
     # Instantiate model
     model = SimpleCNN().to(device)
+
+    # Trace model manually for memory analysis
+    trace_model_instance(model)
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
@@ -50,25 +52,19 @@ def main():
 
     for epoch in range(epochs):
         for i in range(100):
-            # Generate dummy data
             inputs = torch.randn(dummy_input_shape).to(device)
             labels = torch.randint(0, 10, dummy_target_shape).to(device)
-            # Zero the parameter gradients
+
             optimizer.zero_grad()
-            # Forward pass
             outputs = model(inputs)
             loss = criterion(outputs, labels)
-            # Backward pass and optimize
             loss.backward()
             optimizer.step()
 
-            # Optionally, to make it crash for testing error handling:
-            # if epoch == 1 and i == 2:
-            #     raise RuntimeError("Simulated crash during training!")
     with torch.no_grad():
         test_input = torch.randn(1, channels, input_size, input_size).to(device)
         _ = model(test_input)
 
 
 if __name__ == "__main__":
-        main()
+    main()
