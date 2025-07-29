@@ -65,16 +65,18 @@ traceml run src/examples/tracing_with_class_decorator
 - 🔍 **PyTorch layer-level memory tracking**:
   - ✅ Default: via `gc` scanning (zero setup)
   - 🧠 Via `@trace_model` class decorator
-  - 🔧 Via `trace_model()` function for manual model instance tracing
-- 🎮 Live **GPU memory and utilization tracking**
-
+  - 🔧 Via `trace_model_instance()` function for manual model instance tracing
+- 🎮 **Live GPU memory & utilization tracking** (per device)
+- 📦 **Model memory summaries** (per-layer + total)
+- 🧾 **Historical snapshot viewer** with scrollable panel
 
 ---
 
 ## 🔭 Coming Soon
 
-- 🎯 Activation & gradient memory usage
-
+- 🎯 **Activation & gradient memory tracking**
+- 📒 **Jupyter Notebook support**
+- 💾 **Export logs as JSON / CSV**
 
 ---
 
