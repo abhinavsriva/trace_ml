@@ -7,7 +7,7 @@ A simple CLI tool to automatically trace PyTorch training memory usage.
 
 ---
 
-## 💡 The Problem
+## The Problem
 
 Training large machine learning models often feels like a black box. One minute everything's running — the next, you're staring at a cryptic `"CUDA out of memory"` error.  
 
@@ -15,7 +15,7 @@ Pinpointing *which* part of the model is consuming too much memory or slowing th
 
 ---
 
-## ✨ Why TraceML?
+## Why TraceML?
 
 `traceml` is a lightweight CLI tool to instrument your PyTorch training scripts and get real-time, granular insights into:
 
@@ -34,7 +34,7 @@ pip install -e .
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ```bash
 traceml run <your_training_script.py>
@@ -43,7 +43,7 @@ traceml run <your_training_script.py>
 TraceML wraps your training script and prints memory insights to the terminal as your model trains.
 
 
-### 🔍 Examples
+### Examples
 
 ```bash
 # Default: garbage collection-based tracing (no changes to code needed)
@@ -59,24 +59,24 @@ traceml run src/examples/tracing_with_class_decorator
 
 ---
 
-## ✅ Current Features
+## Current Features
 
-- 📊 **Live CPU & RAM usage** (System + Current Process)  
-- 🔍 **PyTorch layer-level memory tracking**:
-  - ✅ Default: via `gc` scanning (zero setup)
-  - 🧠 Via `@trace_model` class decorator
-  - 🔧 Via `trace_model_instance()` function for manual model instance tracing
-- 🎮 **Live GPU memory & utilization tracking** (per device)
-- 📦 **Model memory summaries** (per-layer + total)
-- 🧾 **Historical snapshot viewer** with scrollable panel
+- **Live CPU & RAM usage** (System + Current Process)  
+-  **PyTorch layer-level memory tracking**:
+  -  Default: via `gc` scanning (zero setup)
+  -  Via `@trace_model` class decorator
+  -  Via `trace_model_instance()` function for manual model instance tracing
+-  **Live GPU memory & utilization tracking** (per device)
+-  **Model memory summaries** (per-layer + total)
+-  **Historical snapshot viewer** with scrollable panel
 
 ---
 
-## 🔭 Coming Soon
+## Coming Soon
 
-- 🎯 **Activation & gradient memory tracking**
-- 📒 **Jupyter Notebook support**
-- 💾 **Export logs as JSON / CSV**
+- **Activation & gradient memory tracking**
+- **Jupyter Notebook support**
+- **Export logs as JSON / CSV**
 
 ---
 
