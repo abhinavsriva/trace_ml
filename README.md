@@ -66,6 +66,7 @@ traceml run src/examples/tracing_with_class_decorator
   - ✅ Default: via `gc` scanning (zero setup)
   - 🧠 Via `@trace_model` class decorator
   - 🔧 Via `trace_model()` function for manual model instance tracing
+- 🎮 Live **GPU memory and utilization tracking**
 
 
 ---
@@ -73,7 +74,7 @@ traceml run src/examples/tracing_with_class_decorator
 ## 🔭 Coming Soon
 
 - 🎯 Activation & gradient memory usage
-- 🎮 Live **GPU memory and utilization tracking**
+
 
 ---
 
