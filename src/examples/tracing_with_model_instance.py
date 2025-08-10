@@ -1,59 +1,64 @@
+import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from traceml.decorator import trace_model_instance
 
 
-# Define a simple CNN model
+# A CNN that tolerates variable input sizes via AdaptiveAvgPool2d
 class SimpleCNN(nn.Module):
     def __init__(self):
-        super(SimpleCNN, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 16, kernel_size=3, padding=1)
         self.relu1 = nn.ReLU()
-        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)  # Output 16x16
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
         self.relu2 = nn.ReLU()
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)  # Output 8x8
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.fc1 = nn.Linear(32 * 8 * 8, 128)
+        self.gap = nn.AdaptiveAvgPool2d((1, 1))
+
+        self.fc1 = nn.Linear(32, 128)
         self.relu3 = nn.ReLU()
-        self.fc2 = nn.Linear(128, 10)  # 10 output classes
+        self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
         x = self.pool1(self.relu1(self.conv1(x)))
         x = self.pool2(self.relu2(self.conv2(x)))
-        x = x.view(-1, 32 * 8 * 8)  # Flatten for FC layer
+        x = self.gap(x)
+        x = x.view(x.size(0), -1)
         x = self.relu3(self.fc1(x))
         x = self.fc2(x)
         return x
 
 
 def main():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
 
-    epochs = 3
-    batch_size = 64
-    input_size = 32
-    channels = 3
+    epochs = 10
+    steps_per_epoch = 12
 
-    # Instantiate model
+    # Vary batch size and input resolution each step
+    batch_choices = [8, 16, 32, 64, 96, 128]
+    size_choices = [28, 32, 40, 48, 56, 64, 72, 80]
+
     model = SimpleCNN().to(device)
 
-    # Trace model manually for memory analysis
+    # Attach activation hooks so your sampler sees events
     trace_model_instance(model)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
-    # Simulate dummy data loader
-    dummy_input_shape = (batch_size, channels, input_size, input_size)
-    dummy_target_shape = (batch_size,)
-
+    model.train()
     for epoch in range(epochs):
-        for i in range(10):
-            inputs = torch.randn(dummy_input_shape).to(device)
-            labels = torch.randint(0, 10, dummy_target_shape).to(device)
+        for step in range(steps_per_epoch):
+            bs = random.choice(batch_choices)
+            H = W = random.choice(size_choices)
+
+            inputs = torch.randn(bs, 3, H, W, device=device)
+            labels = torch.randint(0, 10, (bs,), device=device)
 
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -61,8 +66,9 @@ def main():
             loss.backward()
             optimizer.step()
 
+    model.eval()
     with torch.no_grad():
-        test_input = torch.randn(1, channels, input_size, input_size).to(device)
+        test_input = torch.randn(1, 3, 64, 64, device=device)
         _ = model(test_input)
 
 

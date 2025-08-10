@@ -61,17 +61,20 @@ def run_with_tracing(
     system_sampler = SystemSampler()
     process_sampler = ProcessSampler()
     layer_memory_sampler = LayerMemorySampler()
+    activation_memory_sampler = ActivationMemorySampler()
 
     # stdout loggers (on terminal info)
     system_stdout_logger = SystemStdoutLogger()
     process_stdout_logger = ProcessStdoutLogger()
     layer_memory_stdout_logger = LayerMemoryStdoutLogger()
+    activation_memory_stdout_logger = ActivationMemoryStdoutLogger()
 
     # Collect all trackers
     sampler_logger_pairs = [
         (system_sampler, [system_stdout_logger]),
         (process_sampler, [process_stdout_logger]),
         (layer_memory_sampler, [layer_memory_stdout_logger]),
+        (activation_memory_sampler, [activation_memory_stdout_logger]),
     ]
 
     tracker = TrackerManager(sampler_logger_pairs, interval_sec=interval)
