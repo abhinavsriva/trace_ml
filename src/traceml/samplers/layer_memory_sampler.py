@@ -3,7 +3,7 @@ import gc
 import sys
 from typing import Dict, Any, List, Tuple
 from .base_sampler import BaseSampler
-from traceml.decorator import get_model_queue
+from traceml.utils.patch import get_model_queue
 
 
 class LayerMemorySampler(BaseSampler):
@@ -126,12 +126,6 @@ class LayerMemorySampler(BaseSampler):
             return self._latest_snapshot
 
         return self._sample_from_gc()
-
-    def get_live_snapshot(self) -> Dict[str, Any]:
-        """
-        Return the latest sampled snapshot.
-        """
-        return self._latest_snapshot
 
     def get_summary(self) -> Dict[str, Any]:
         """

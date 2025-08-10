@@ -19,7 +19,7 @@ Pinpointing *which* part of the model is consuming too much memory or slowing th
 
 `traceml` is a lightweight CLI tool to instrument your PyTorch training scripts and get real-time, granular insights into:
 
-- System and process-level CPU & RAM usage  
+- System and process-level CPU , GPU & RAM usage  
 - PyTorch layer-level memory allocation (via `gc` or decorator/instance tracing)
 
 All shown live in your terminal — no config, no setup, just plug-and-trace.
@@ -61,20 +61,19 @@ traceml run src/examples/tracing_with_class_decorator
 
 ## Current Features
 
-- **Live CPU & RAM usage** (System + Current Process)  
+- **Live CPU, RAM and GPU usage** (System + Current Process)  
 -  **PyTorch layer-level memory tracking**:
-  -  Default: via `gc` scanning (zero setup)
+  -  Default: via `gc` scanning (zero setup but no activation/gradient tracking)
   -  Via `@trace_model` class decorator
   -  Via `trace_model_instance()` function for manual model instance tracing
--  **Live GPU memory & utilization tracking** (per device)
 -  **Model memory summaries** (per-layer + total)
--  **Historical snapshot viewer** with scrollable panel
+-  **Activation memory tracking**
 
 ---
 
 ## Coming Soon
 
-- **Activation & gradient memory tracking**
+- **Gradient memory tracking**
 - **Jupyter Notebook support**
 - **Export logs as JSON / CSV**
 

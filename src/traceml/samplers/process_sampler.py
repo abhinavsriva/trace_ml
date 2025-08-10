@@ -112,12 +112,6 @@ class ProcessSampler(BaseSampler):
             self._latest_snapshot = error_snapshot
             return error_snapshot
 
-    def get_live_snapshot(self) -> Dict[str, Any]:
-        """
-        Return the most recent CPU and RAM usage snapshot.
-        """
-        return self._latest_snapshot
-
     def get_summary(self) -> Dict[str, Any]:
         """
         Return average and peak CPU/RAM usage for the monitored process.

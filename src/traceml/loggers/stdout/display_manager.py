@@ -16,7 +16,7 @@ LIVE_METRICS_LAYOUT_NAME = "live_metrics_section"
 SYSTEM_LAYOUT_NAME = "system_metrics_section"
 PROCESS_LAYOUT_NAME = "process_metrics_section"
 MODEL_SUMMARY_LAYOUT_NAME = "current_model_summary_section"
-MODEL_HISTORY_LAYOUT_NAME = "model_snapshots_section"
+ACTIVATION_SUMMARY_LAYOUT_NAME = "activation_memory_summary_section"
 
 
 
@@ -44,14 +44,10 @@ class StdoutDisplayManager:
         Defines the improved structure of the Rich Layout with flexible ratios.
         """
         cls._layout.split_column(
-            Layout(name=LIVE_METRICS_LAYOUT_NAME, size=3),
-            Layout(name=MODEL_SUMMARY_LAYOUT_NAME, ratio=2),
-            Layout(name=MODEL_HISTORY_LAYOUT_NAME, ratio=3)
-        )
-
-        cls._layout[LIVE_METRICS_LAYOUT_NAME].split_row(
             Layout(name=SYSTEM_LAYOUT_NAME, ratio=1),
-            Layout(name=PROCESS_LAYOUT_NAME, ratio=1)
+            Layout(name=PROCESS_LAYOUT_NAME, ratio=1),
+            Layout(name=MODEL_SUMMARY_LAYOUT_NAME, ratio=2),
+            Layout(name=ACTIVATION_SUMMARY_LAYOUT_NAME, ratio=4),
         )
 
         # Initialize panels with placeholder text
@@ -64,8 +60,8 @@ class StdoutDisplayManager:
         cls._layout[MODEL_SUMMARY_LAYOUT_NAME].update(
             Panel(Text("Waiting for Current Model...", justify="center"))
         )
-        cls._layout[MODEL_HISTORY_LAYOUT_NAME].update(
-            Panel(Text("No Model Snapshots Yet...", justify="center"))
+        cls._layout[ACTIVATION_SUMMARY_LAYOUT_NAME].update(
+            Panel(Text("Waiting for Activation Memory...", justify="center"))
         )
 
     @classmethod
