@@ -3,7 +3,7 @@ import gc
 import sys
 from typing import Dict, Any, List, Tuple
 from .base_sampler import BaseSampler
-from traceml.decorator import get_model_queue
+from traceml.utils.patch import get_model_queue
 
 
 class LayerMemorySampler(BaseSampler):

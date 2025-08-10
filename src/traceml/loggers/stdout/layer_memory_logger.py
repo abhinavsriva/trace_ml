@@ -5,7 +5,7 @@ from rich.console import Console
 from typing import Dict, Any, List
 
 from .base_logger import BaseStdoutLogger
-from .display_manager import MODEL_SUMMARY_LAYOUT_NAME, MODEL_HISTORY_LAYOUT_NAME
+from .display_manager import MODEL_SUMMARY_LAYOUT_NAME
 from .display_manager import StdoutDisplayManager
 
 
@@ -18,11 +18,6 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
 
     def __init__(self):
         super().__init__(name="Layer Memory", layout_section_name=MODEL_SUMMARY_LAYOUT_NAME)
-
-        # Register history panel separately in its own layout section
-        StdoutDisplayManager.register_layout_content(
-            MODEL_HISTORY_LAYOUT_NAME, self._get_history_renderable
-        )
 
         self._latest_snapshot: Dict[str, Any] = {}
         self._history_snapshots: List[Dict[str, Any]] = []
@@ -59,42 +54,6 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
             title=f"Live Model #{model_index} – Total: {total_mb:.2f} MB",
             border_style="cyan",
             width=80
-        )
-
-    def _get_history_renderable(self) -> Panel:
-        """
-        Scrollable history of previously discovered models,
-        each displayed as a separate panel like the live model.
-        """
-        panels = []
-
-        for snapshot in reversed(self._history_snapshots[-20:]):  # Last 20 models
-            index = snapshot.get("model_index", "n/a")
-            total_mb = snapshot.get("total_memory_mb", 0.0)
-            layer_data = snapshot.get("layer_memory_mb", {})
-            signature = snapshot.get("model_signature", "")[:50]
-
-            table = Table(show_header=True, header_style="bold magenta", box=None, expand=True)
-            table.add_column("Layer", justify="left")
-            table.add_column("Memory (MB)", justify="right")
-
-            for layer_name, mem_mb in layer_data.items():
-                table.add_row(layer_name, f"{mem_mb:.4f}")
-
-            panel = Panel(
-                table,
-                title=f"Model #{index} – Total: {total_mb:.2f} MB",
-                subtitle=f"[dim]Signature: {signature}",
-                border_style="cyan",
-                width=80
-            )
-            panels.append(panel)
-
-        return Panel(
-            Group(*panels, "\n"),
-            title="Model Snapshots (Recent 20)",
-            border_style="dim white",
-            width=120
         )
 
     def log_summary(self, summary: Dict[str, Any]):

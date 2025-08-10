@@ -4,7 +4,7 @@ from typing import Callable
 import torch.nn as nn
 
 
-from src.traceml.utils.patch import (
+from traceml.utils.patch import (
     model_queue,
     attach_activation_hooks,
 )
@@ -72,4 +72,3 @@ def trace_model_instance(
         # TODO: implement trace gradients
     except Exception as e:
         print(f"[TraceML] Failed to trace model instance: {e}", file=sys.stderr)
-s
