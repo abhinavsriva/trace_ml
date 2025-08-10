@@ -9,10 +9,12 @@ import traceback
 from traceml.samplers.system_sampler import SystemSampler
 from traceml.samplers.process_sampler import ProcessSampler
 from traceml.samplers.layer_memory_sampler import LayerMemorySampler
+from traceml.samplers.activation_memory_sampler import ActivationMemorySampler
 
 from traceml.loggers.stdout.system_logger import SystemStdoutLogger
 from traceml.loggers.stdout.process_logger import ProcessStdoutLogger
 from traceml.loggers.stdout.layer_memory_logger import LayerMemoryStdoutLogger
+from traceml.loggers.stdout.activation_memory_logger import ActivationMemoryStdoutLogger
 
 from traceml.manager.tracker_manager import TrackerManager
 

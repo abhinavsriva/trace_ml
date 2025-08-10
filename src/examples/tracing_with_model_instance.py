@@ -51,7 +51,7 @@ def main():
     dummy_target_shape = (batch_size,)
 
     for epoch in range(epochs):
-        for i in range(100):
+        for i in range(10):
             inputs = torch.randn(dummy_input_shape).to(device)
             labels = torch.randint(0, 10, dummy_target_shape).to(device)
 

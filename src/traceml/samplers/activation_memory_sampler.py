@@ -20,7 +20,7 @@ class _BatchStats:
     min_nonzero_mb: Optional[float]
 
 
-class ActivationQueueSampler(BaseSampler):
+class ActivationMemorySampler(BaseSampler):
     """
     Drain-all activation-event sampler.
 

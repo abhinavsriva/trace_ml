@@ -4,15 +4,19 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from traceml.decorator import trace_model_instance
+
 from traceml.samplers.process_sampler import ProcessSampler
 from traceml.samplers.system_sampler import SystemSampler
 from traceml.samplers.layer_memory_sampler import LayerMemorySampler
+from traceml.samplers.activation_memory_sampler import ActivationMemorySampler
 
 from traceml.manager.tracker_manager import TrackerManager
 
 from traceml.loggers.stdout.system_logger import SystemStdoutLogger
 from traceml.loggers.stdout.process_logger import ProcessStdoutLogger
 from traceml.loggers.stdout.layer_memory_logger import LayerMemoryStdoutLogger
+from traceml.loggers.stdout.activation_memory_logger import ActivationMemoryStdoutLogger
 
 
 class SimpleMLP(nn.Module):
@@ -41,15 +45,19 @@ def test_system_sampler_with_pytorch_model():
     system_sampler = SystemSampler()
     process_sampler = ProcessSampler()
     layer_memory_sampler = LayerMemorySampler()
+    activation_memory_sampler = ActivationMemorySampler()
+
 
     system_stdout_logger = SystemStdoutLogger()
     process_stdout_logger = ProcessStdoutLogger()
     layer_memory_stdout_logger = LayerMemoryStdoutLogger()
+    activation_memory_logger = ActivationMemoryStdoutLogger()
 
     tracker_components = [
         (system_sampler, [system_stdout_logger]),
         (process_sampler, [process_stdout_logger]),
         (layer_memory_sampler, [layer_memory_stdout_logger]),
+        (activation_memory_sampler, [activation_memory_logger])
     ]
     tracker = TrackerManager(components=tracker_components, interval_sec=0.5)
 
@@ -59,11 +67,12 @@ def test_system_sampler_with_pytorch_model():
         # Define model, optimizer, and loss
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = SimpleMLP(input_dim=100, hidden_dim=256, output_dim=10).to(device)
+        trace_model_instance(model)
         optimizer = optim.Adam(model.parameters(), lr=0.001)
         criterion = nn.MSELoss()
 
         # Training loop (simulated workload)
-        test_duration = 10
+        test_duration = 100
         end_time = time.time() + test_duration
         iteration = 0
 

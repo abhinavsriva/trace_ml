@@ -69,7 +69,6 @@ class SystemStdoutLogger(BaseStdoutLogger):
         table.add_row(f"CPU: {self._format_percent(cpu_val)}")
 
         # RAM row
-        print(ram_total)
         ram_pct = ""
         try:
             if ram_total and ram_total > 0:
