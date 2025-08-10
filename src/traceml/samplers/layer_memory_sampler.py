@@ -127,12 +127,6 @@ class LayerMemorySampler(BaseSampler):
 
         return self._sample_from_gc()
 
-    def get_live_snapshot(self) -> Dict[str, Any]:
-        """
-        Return the latest sampled snapshot.
-        """
-        return self._latest_snapshot
-
     def get_summary(self) -> Dict[str, Any]:
         """
         Return summary statistics over all models seen.

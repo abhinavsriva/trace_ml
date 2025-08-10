@@ -27,18 +27,6 @@ class BaseSampler(ABC):
         pass
 
     @abstractmethod
-    def get_live_snapshot(self) -> Dict[str, Any]:
-        """
-        Return the most recent snapshot of collected metrics. This should ideally
-        return the last set of values successfully returned by `sample()`.
-
-        Returns:
-            Dict[str, Any]: Latest sampled values. Should return a default/empty
-                            dict if no samples available or an error state.
-        """
-        pass
-
-    @abstractmethod
     def get_summary(self) -> Dict[str, Any]:
         """
         Compute and return summary statistics for the collected metrics over the sampling period.

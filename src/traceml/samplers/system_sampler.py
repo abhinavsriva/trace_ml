@@ -204,17 +204,6 @@ class SystemSampler(BaseSampler):
             self._latest_snapshot = error_snapshot
             return error_snapshot
 
-    def get_live_snapshot(self) -> Dict[str, Any]:
-        """
-        Return the most recent CPU and RAM usage reading.
-
-        Returns:
-            Dict[str, Any]: Latest sampled values. Returns initialized default
-                            if no samples have been successfully collected yet.
-        """
-        # Return the last updated snapshot
-        return self._latest_snapshot
-
     def get_summary(self) -> Dict[str, Any]:
         try:
             summary: Dict[str, Any] = {

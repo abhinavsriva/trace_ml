@@ -190,10 +190,6 @@ class ActivationQueueSampler(BaseSampler):
         self._ever_seen = True
         return self._latest_snapshot
 
-    def get_live_snapshot(self) -> Dict[str, Any]:
-        """Return the last computed snapshot (may be stale)."""
-        return self._latest_snapshot
-
     def get_summary(self) -> Dict[str, Any]:
         """
         Summarize all drained data so far using cumulative counters.
