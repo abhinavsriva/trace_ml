@@ -1,6 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from dataclasses import dataclass, field, asdict
+from typing import Any, Dict, Optional
+import time
 
+@dataclass
+class SampleSnapshot:
+    ok: bool
+    message: str
+    ts: float = field(default_factory=time.time)
+    source: str = ""
+    data: Optional[dict] = None
 
 class BaseSampler(ABC):
     """
@@ -14,15 +23,26 @@ class BaseSampler(ABC):
         # Optional: Initialize common sampler-level properties or perform global setup
         pass
 
+    @staticmethod
+    def make_snapshot(ok: bool, message: str, source: str, data: Optional[dict] = None) -> SampleSnapshot:
+        return SampleSnapshot(ok=ok, message=message, source=source, data=data)
+
+    @staticmethod
+    def snapshot_dict(snapshot: SampleSnapshot) -> Dict[str, Any]:
+        return asdict(snapshot)
+
     @abstractmethod
     def sample(self) -> Dict[str, Any]:
         """
-        Collect the latest data point(s) and return them as a dictionary.
-        This method should be non-blocking. It is called regularly by the tracker loop.
-
-        Returns:
-            Dict[str, Any]: A dictionary containing the sampled metrics.
-                            Should return a dict with 'error' key if sampling fails.
+        Collect the latest data point(s) and return a dict envelope:
+        {
+          "ok": bool,
+          "message": str,
+          "ts": float,
+          "source": str,
+          "data": Optional[dict]   # payload with fields specific to the sampler
+        }
+        This method should be non-blocking.
         """
         pass
 

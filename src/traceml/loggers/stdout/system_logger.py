@@ -1,10 +1,11 @@
 from rich.panel import Panel
 from rich.table import Table
 from rich.console import Console
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from .base_logger import BaseStdoutLogger
 from .display_manager import SYSTEM_LAYOUT_NAME
+from .display_manager import StdoutDisplayManager
 
 
 class SystemStdoutLogger(BaseStdoutLogger):
@@ -18,6 +19,7 @@ class SystemStdoutLogger(BaseStdoutLogger):
 
     def __init__(self):
         super().__init__(name="System", layout_section_name=SYSTEM_LAYOUT_NAME)
+        self._latest_env: Optional[Dict[str, Any]] = None
         self._latest_data: Dict[str, Any] = {}
 
     def _format_percent(self, value: Any) -> str:
@@ -42,12 +44,13 @@ class SystemStdoutLogger(BaseStdoutLogger):
             return "N/A"
 
     def _get_panel_renderable(self) -> Panel:
-        d = self._latest_data
+        env = self._latest_env or {}
+        d = self._latest_data or {}
 
         # CPU and RAM
         cpu_val = d.get("cpu_percent", 0.0)
-        ram_used = d.get("ram_used_mb", 0.0)
-        ram_total = d.get("ram_total_mb", 0.0)
+        ram_used = d.get("ram_used", 0.0)
+        ram_total = d.get("ram_total", 0.0)
 
         # GPU utilization metrics
         gpu_util_avg = d.get("gpu_util_avg_percent")
@@ -56,17 +59,17 @@ class SystemStdoutLogger(BaseStdoutLogger):
         imbalance = d.get("gpu_util_imbalance_ratio")
 
         # GPU memory metrics
-        gpu_mem_high = d.get("gpu_memory_highest_used_mb")
-        gpu_mem_low = d.get("gpu_memory_lowest_nonzero_used_mb")
+        gpu_mem_high = d.get("gpu_memory_highest_used")
+        gpu_mem_low = d.get("gpu_memory_lowest_nonzero_used")
         high_pressure = d.get("gpu_count_high_pressure", 0)
         total_gpus = d.get("gpu_total_count", None)
 
         # Build table
         table = Table(box=None, show_header=False, padding=(0, 2))
-        table.add_column(justify="left")
+        table.add_column(justify="left", style="bold magenta")
 
         # CPU row
-        table.add_row(f"CPU: {self._format_percent(cpu_val)}")
+        table.add_row(f"CPU: [white]{self._format_percent(cpu_val)}[/white]")
 
         # RAM row
         ram_pct = ""
@@ -75,19 +78,19 @@ class SystemStdoutLogger(BaseStdoutLogger):
                 ram_pct = f" ({float(ram_used)/float(ram_total)*100:.1f}%)"
         except Exception:
             ram_pct = ""
-        table.add_row(f"RAM: {self._format_memory(ram_used)}/{self._format_memory(ram_total)}{ram_pct}")
+        table.add_row(f"RAM: [white]{self._format_memory(ram_used)}/{self._format_memory(ram_total)}{ram_pct}[/white]")
 
         # GPU UTILIZATION block
         if gpu_util_avg is not None:
             table.add_row("")  # spacer
             table.add_row("[bold magenta]GPU UTILIZATION:[/bold magenta]")
-            table.add_row(f"  AVG: {self._format_percent(gpu_util_avg)}")
+            table.add_row(f"  AVG: [white]{self._format_percent(gpu_util_avg)}[/white]")
             if gpu_util_min not in (None, 0):
-                table.add_row(f"  MIN: {self._format_percent(gpu_util_min)}")
+                table.add_row(f"  MIN: [white]{self._format_percent(gpu_util_min)}[/white]")
             if gpu_util_max not in (None, 0):
-                table.add_row(f"  MAX: {self._format_percent(gpu_util_max)}")
+                table.add_row(f"  MAX: [white]{self._format_percent(gpu_util_max)}[/white]")
             if imbalance not in (None, 0):
-                table.add_row(f"  IMBALANCE: {self._format_ratio(imbalance)}")
+                table.add_row(f"  IMBALANCE: [white]{self._format_ratio(imbalance)}[/white]")
 
         # GPU MEMORY block
         if gpu_mem_high is not None or gpu_mem_low not in (None, 0) or total_gpus is not None:
@@ -112,8 +115,10 @@ class SystemStdoutLogger(BaseStdoutLogger):
         )
         return panel
 
-    def update(self, data: Dict[str, Any]):
-        self._latest_data = data
+    def log(self, payload: Dict[str, Any]):
+        self._latest_env = payload
+        self._latest_data = payload.get("data") or {}
+        StdoutDisplayManager.update_display()
 
     def log_summary(self, summary: Dict[str, Any]):
         console = Console()

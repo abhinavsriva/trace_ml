@@ -44,10 +44,10 @@ class StdoutDisplayManager:
         Defines the improved structure of the Rich Layout with flexible ratios.
         """
         cls._layout.split_column(
-            Layout(name=SYSTEM_LAYOUT_NAME, ratio=1),
-            Layout(name=PROCESS_LAYOUT_NAME, ratio=1),
-            Layout(name=MODEL_SUMMARY_LAYOUT_NAME, ratio=2),
-            Layout(name=ACTIVATION_SUMMARY_LAYOUT_NAME, ratio=4),
+    Layout(name=SYSTEM_LAYOUT_NAME),
+            Layout(name=PROCESS_LAYOUT_NAME),
+            Layout(name=MODEL_SUMMARY_LAYOUT_NAME),
+            Layout(name=ACTIVATION_SUMMARY_LAYOUT_NAME),
         )
 
         # Initialize panels with placeholder text

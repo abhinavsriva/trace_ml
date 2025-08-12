@@ -12,7 +12,6 @@ from traceml.utils.patch import get_activation_queue
 
 @dataclass
 class _BatchStats:
-    """Stats computed for a set of values (MB) within a single drain cycle."""
     count: int
     sum_mb: float
     avg_mb: float
@@ -45,13 +44,10 @@ class ActivationMemorySampler(BaseSampler):
         super().__init__()
         self.pressure_threshold = float(pressure_threshold)
         self.store_raw = bool(store_raw)
-
         # raw event(each item: {"ts": float, "per_device_mb": {dev: mb}})
         self._raw_events: Deque[Dict[str, Any]] = deque(maxlen=int(max_raw_events))
-
         # Cumulative stats: dev -> (count_samples, sum_mb, max_mb)
         self._cumulative: Dict[str, Tuple[int, float, float]] = defaultdict(lambda: (0, 0.0, 0.0))
-
         # Last live snapshot + flag to know if we ever saw any data
         self._latest_snapshot: Dict[str, Any] = {}
         self._ever_seen: bool = False
@@ -193,7 +189,7 @@ class ActivationMemorySampler(BaseSampler):
     def get_summary(self) -> Dict[str, Any]:
         """
         Summarize all drained data so far using cumulative counters.
-        Returns a dict; keeping dicts (instead of dataclasses) matches your other samplers.
+        Returns a dict
         """
         per_dev_summary: Dict[str, Any] = {}
         for dev, (c_count, c_sum, c_max) in self._cumulative.items():
