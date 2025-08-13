@@ -312,10 +312,10 @@ class SystemSampler(BaseSampler):
                     "gpu_total_count": self.gpu_count,
                     "gpu_average_util_percent": round(average_gpu_util, 2),
                     "gpu_peak_util_percent": round(peak_gpu_util, 2),
-                    "gpu_memory_global_peak_used_mb": round(global_peak, 2),
-                    "gpu_memory_global_lowest_nonzero_used_mb": round(global_min_nonzero, 2),
-                    "gpu_memory_average_used_mb": round(avg_mem, 2),
-                    "gpu_memory_variance_mb": round(var_mem, 2),
+                    "gpu_memory_global_peak_used": round(global_peak, 2),
+                    "gpu_memory_global_lowest_nonzero_used": round(global_min_nonzero, 2),
+                    "gpu_memory_average_used": round(avg_mem, 2),
+                    "gpu_memory_variance": round(var_mem, 2),
                 })
             else:
                 summary.update({

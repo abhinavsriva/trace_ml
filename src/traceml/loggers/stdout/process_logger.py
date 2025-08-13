@@ -1,19 +1,18 @@
 from rich.text import Text
 from rich.panel import Panel
-from rich.align import Align
 from rich.table import Table
-from typing import Dict, Any
+from typing import Dict, Any,  Optional
 from rich.console import Console
 
 import psutil
 
 from .base_logger import BaseStdoutLogger
 from .display_manager import PROCESS_LAYOUT_NAME
+from .display_manager import StdoutDisplayManager
 
 class ProcessStdoutLogger(BaseStdoutLogger):
     """
     Stdout logger for Process-level (self PID) CPU, RAM and GPU usage metrics.
-    Displays live resource usage of your TraceML + training script process.
     """
 
     def __init__(self):
@@ -21,8 +20,8 @@ class ProcessStdoutLogger(BaseStdoutLogger):
 
         self._latest_data = {
             "process_cpu_percent": 0.0,
-            "process_ram_mb": 0.0,
-            "process_gpu_mem_mb": None
+            "process_ram": 0.0,
+            "process_gpu_memory": None
         }
 
         # Detect system CPU topology at logger initialization
@@ -34,24 +33,40 @@ class ProcessStdoutLogger(BaseStdoutLogger):
             if self.physical_cores else 1
         )
 
+    def _fmt_percent(self, v: Any) -> str:
+        try:
+            return f"{float(v):.1f}%"
+        except Exception:
+            return "N/A"
+
+    def _fmt_mem_mb(self, v: Any) -> str:
+        try:
+            return f"{float(v):.0f}MB"
+        except Exception:
+            return "N/A"
+
     def _get_panel_renderable(self) -> Panel:
         """
         Generates the Rich Panel for live display:
-        Example: "CPU: 22.5% | RAM: 1450MB"
         """
-        cpu_val = self._latest_data.get("process_cpu_percent", 0.0)
-        ram_val = self._latest_data.get("process_ram_mb", 0.0)
-        gpu_mem = self._latest_data.get("process_gpu_memory_mb")
+        env = self._latest_env or {}
+        d = self._latest_data or {}
 
-        cpu_display_str = f"CPU ({self.logical_cores} cores): {cpu_val:.1f}%"
-        ram_display_str = f"RAM: {ram_val:.0f}MB"
+        cpu_val = d.get("process_cpu_percent", 0.0)
+        ram_val = d.get("process_ram", 0.0)
+        gpu_mem = d.get("process_gpu_memory")
 
         table = Table(box=None, show_header=False, padding=(0, 2))
         table.add_column(justify="center", style="bold magenta")
         table.add_column(justify="center", style="bold cyan")
+
+        cpu_display_str = f"CPU ({self.logical_cores} cores): {self._fmt_percent(cpu_val)}"
+        ram_display_str = f"RAM: {self._fmt_mem_mb(ram_val)}"
+
         table.add_row(cpu_display_str, ram_display_str)
+
         if gpu_mem is not None:
-            gpu_display_str = f"GPU Memory: {gpu_mem:.0f}MB"
+            gpu_display_str = f"GPU Memory: {self._fmt_mem_mb(gpu_mem)}"
             table.add_row("", gpu_display_str)
 
         return Panel(
@@ -62,10 +77,19 @@ class ProcessStdoutLogger(BaseStdoutLogger):
             width=80,
         )
 
+    def log(self, snapshot_dict: Dict[str, Any]):
+        self._latest_env = snapshot_dict
+        self._latest_data = snapshot_dict.get("data") or {}
+        StdoutDisplayManager.update_display()
+
     def log_summary(self, summary: Dict[str, Any]):
         """
         Logs the final summary.
-        Should be called after Rich Live display has stopped.
+        Works with ProcessSampler.get_summary() output:
+          - total_process_samples
+          - cpu_average_percent, cpu_peak_percent
+          - ram_average_mb, ram_peak_mb
+          - gpu_average_memory_mb, gpu_peak_memory_mb
         """
         console = Console()
 
@@ -74,14 +98,33 @@ class ProcessStdoutLogger(BaseStdoutLogger):
         table.add_column(justify="center", style="dim", no_wrap=True)
         table.add_column(justify="right", style="bold white")
 
+        def fmt_pair(key: str, value: Any) -> str:
+            if value is None:
+                return "N/A"
+            # Percent-style keys
+            if "percent" in key:
+                try:
+                    return f"{float(value):.1f}%"
+                except Exception:
+                    return "N/A"
+            # Memory in MB
+            if any(sub in key for sub in ("ram_", "gpu_", "memory")) and key.endswith("_mb"):
+                try:
+                    return f"{float(value):.2f} MB"
+                except Exception:
+                    return "N/A"
+            # Counts / totals
+            if "total" in key or "count" in key:
+                try:
+                    return str(int(value))
+                except Exception:
+                    return str(value)
+            # Fallback
+            return str(value)
+
         for key, value in summary.items():
             display_key = key.replace('_', ' ').upper()
-            if "percent" in key:
-                display_value = f"{value:.1f}%"
-            elif "ram" in key or "gpu" in key:
-                display_value = f"{value:.2f} MB"
-            else:
-                display_value = str(value)
+            display_value = fmt_pair(key, value)
             table.add_row(display_key, "[cyan]|[/cyan]", display_value)
 
         panel = Panel(table, title=f"[bold cyan]{self.name} - Final Summary", border_style="cyan")

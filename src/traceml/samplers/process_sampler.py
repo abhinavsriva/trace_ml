@@ -149,10 +149,10 @@ class ProcessSampler(BaseSampler):
                 "total_process_samples": len(cpu_values),
                 "cpu_average_percent": round(float(sum(cpu_values) / len(cpu_values)), 2) if cpu_values else 0.0,
                 "cpu_peak_percent": round(max(cpu_values), 2) if cpu_values else 0.0,
-                "ram_average_mb": round(float(sum(ram_values) / len(ram_values)), 2) if ram_values else 0.0,
-                "ram_peak_mb": round(max(ram_values), 2) if ram_values else 0.0,
-                "gpu_average_memory_mb": round(float(sum(gpu_mem_values) / len(gpu_mem_values)), 2) if gpu_mem_values else 0.0,
-                "gpu_peak_memory_mb": round(max(gpu_mem_values), 2) if gpu_mem_values else 0.0,
+                "ram_average": round(float(sum(ram_values) / len(ram_values)), 2) if ram_values else 0.0,
+                "ram_peak": round(max(ram_values), 2) if ram_values else 0.0,
+                "gpu_average_memory": round(float(sum(gpu_mem_values) / len(gpu_mem_values)), 2) if gpu_mem_values else 0.0,
+                "gpu_peak_memory": round(max(gpu_mem_values), 2) if gpu_mem_values else 0.0,
             }
             return summary
 

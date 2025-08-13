@@ -115,9 +115,9 @@ class SystemStdoutLogger(BaseStdoutLogger):
         )
         return panel
 
-    def log(self, payload: Dict[str, Any]):
-        self._latest_env = payload
-        self._latest_data = payload.get("data") or {}
+    def log(self, snapshot_dict: Dict[str, Any]):
+        self._latest_env = snapshot_dict
+        self._latest_data = snapshot_dict.get("data") or {}
         StdoutDisplayManager.update_display()
 
     def log_summary(self, summary: Dict[str, Any]):
