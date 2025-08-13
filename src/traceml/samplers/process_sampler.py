@@ -1,43 +1,60 @@
+from dataclasses import dataclass, field
+from collections import deque
 import psutil
 import os
 import sys
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Deque
 from .base_sampler import BaseSampler
 
 from pynvml import (
     nvmlInit,
-    nvmlShutdown,
     nvmlDeviceGetHandleByIndex,
-    nvmlDeviceGetProcessUtilization,
     nvmlDeviceGetComputeRunningProcesses,
     nvmlDeviceGetCount,
     NVMLError,
 )
+
+@dataclass
+class ProcessCPUSample:
+    percent: float
+
+@dataclass
+class ProcessRAMSample:
+    used: float
+
+@dataclass
+class ProcessGPUMemSample:
+    used: float
+
+@dataclass
+class ProcessSnapshot:
+    process_cpu_percent: float
+    process_ram: float
+    process_gpu_memory: Optional[float] = None
+
 
 
 class ProcessSampler(BaseSampler):
     """
     Sampler that tracks CPU and RAM usage of the current Python process
     (or a specified PID) over time using psutil.
-
-    Useful for monitoring your training script and TraceML process itself.
     """
 
-    def __init__(self, pid: int = None):
+    def __init__(self, pid: Optional[int] = None):
         super().__init__()
 
         # Monitor current process by default
-        self.process = psutil.Process(pid or os.getpid())
+        self.pid = pid or os.getpid()
+        self.process = psutil.Process(self.pid)
 
         # Sampling history
-        self.cpu_samples: List[float] = []
-        self.ram_samples_mb: List[float] = []
-        self.gpu_mem_samples_mb: List[float] = []
+        self.cpu_history: Deque[ProcessCPUSample] = deque(maxlen=10_000)
+        self.ram_history: Deque[ProcessRAMSample] = deque(maxlen=10_000)
+        self.gpu_mem_history: Deque[ProcessGPUMemSample] = deque(maxlen=10_000)
 
         self.gpu_available = False
         self.gpu_count = 0
-
-        # Prime CPU usage measurement
+        # CPU usage measurement
         try:
             self.process.cpu_percent(interval=None)
         except Exception as e:
@@ -54,10 +71,10 @@ class ProcessSampler(BaseSampler):
             print(f"[TraceML] WARNING: NVML GPU support unavailable: {e}", file=sys.stderr)
 
         # Latest snapshot
-        self._latest_snapshot: Dict[str, Any] = {}
+        self.latest: Optional[ProcessSnapshot] = None
 
 
-    def _get_process_gpu_memory_mb(self) -> Optional[float]:
+    def _get_process_gpu_memory(self) -> Optional[float]:
         """Return the GPU memory (in MB) used by this process, or None if unavailable."""
         if not self.gpu_available:
             return None
@@ -80,77 +97,68 @@ class ProcessSampler(BaseSampler):
         """
         Sample current CPU, RAM and GPU usage of the monitored process.
         Returns:
-            Dict[str, Any]: Snapshot of CPU % and RAM MB used.
+            envelope dict via BaseSampler helpers
         """
         try:
             cpu_usage = self.process.cpu_percent(interval=None)
-            ram_usage_mb = self.process.memory_info().rss / (1024**2)
-            gpu_usage_mb = self._get_process_gpu_memory_mb()
+            ram_usage = self.process.memory_info().rss / (1024**2)
+            gpu_mem_usage = self._get_process_gpu_memory()
 
-            current_sample = {
-                "process_cpu_percent": round(cpu_usage, 2),
-                "process_ram_mb": round(ram_usage_mb, 2),
-                "process_gpu_memory_mb": round(gpu_usage_mb, 2) if gpu_usage_mb is not None else None,
-            }
+            # Append to histories
+            self.cpu_history.append(ProcessCPUSample(percent=cpu_usage))
+            self.ram_history.append(ProcessRAMSample(used=ram_usage))
+            if gpu_mem_usage is not None:
+                self.gpu_mem_history.append(ProcessGPUMemSample(used=gpu_mem_usage))
 
-            self.cpu_samples.append(cpu_usage)
-            self.ram_samples_mb.append(ram_usage_mb)
-            if gpu_usage_mb is not None:
-                self.gpu_mem_samples_mb.append(gpu_usage_mb)
+            # Create snapshot
+            self.latest = ProcessSnapshot(
+                process_cpu_percent=round(cpu_usage, 2),
+                process_ram=round(ram_usage, 2),
+                process_gpu_memory=round(gpu_mem_usage, 2) if gpu_mem_usage is not None else None,
+            )
 
-            self._latest_snapshot = current_sample
-            return current_sample
+            snap = self.make_snapshot(
+                ok=True,
+                message="sampled successfully",
+                source="process",
+                data=self.latest.__dict__,
+            )
+            return self.snapshot_dict(snap)
 
         except Exception as e:
             print(f"[TraceML] Process sampling error: {e}", file=sys.stderr)
-            error_snapshot = {
-                "process_cpu_percent": 0.0,
-                "process_ram_mb": 0.0,
-                "process_gpu_memory_mb": 0.0,
-                "error": str(e),
-            }
-            self._latest_snapshot = error_snapshot
-            return error_snapshot
+            self.latest = None
+            snap = self.make_snapshot(
+                ok=False,
+                message=f"sampling failed: {e}",
+                source="process",
+                data=None,
+            )
+            return self.snapshot_dict(snap)
 
     def get_summary(self) -> Dict[str, Any]:
         """
-        Return average and peak CPU/RAM usage for the monitored process.
+        Summarize history for process CPU, RAM, and GPU memory.
         """
-        summary = {}
         try:
-            if self.cpu_samples:
-                summary["cpu_average_percent"] = round(
-                    sum(self.cpu_samples) / len(self.cpu_samples), 2
-                )
-                summary["cpu_peak_percent"] = round(max(self.cpu_samples), 2)
-            else:
-                summary["cpu_average_percent"] = 0.0
-                summary["cpu_peak_percent"] = 0.0
+            cpu_values = [s.percent for s in self.cpu_history]
+            ram_values = [s.used for s in self.ram_history]
+            gpu_mem_values = [s.used for s in self.gpu_mem_history]
 
-            if self.ram_samples_mb:
-                summary["ram_average"] = round(
-                    sum(self.ram_samples_mb) / len(self.ram_samples_mb), 2
-                )
-                summary["ram_peak"] = round(max(self.ram_samples_mb), 2)
-            else:
-                summary["ram_average"] = 0.0
-                summary["ram_peak"] = 0.0
-
-            summary["total_process_samples"] = len(self.cpu_samples)
-
-            if self.gpu_mem_samples_mb:
-                summary.update({
-                    "gpu_average_memory": round(sum(self.gpu_mem_samples_mb) / len(self.gpu_mem_samples_mb), 2),
-                    "gpu_peak_memory": round(max(self.gpu_mem_samples_mb), 2),
-                })
-            else:
-                summary.update({
-                    "gpu_average_memory": 0.0,
-                    "gpu_peak_memory": 0.0,
-                })
+            summary: Dict[str, Any] = {
+                "total_process_samples": len(cpu_values),
+                "cpu_average_percent": round(float(sum(cpu_values) / len(cpu_values)), 2) if cpu_values else 0.0,
+                "cpu_peak_percent": round(max(cpu_values), 2) if cpu_values else 0.0,
+                "ram_average_mb": round(float(sum(ram_values) / len(ram_values)), 2) if ram_values else 0.0,
+                "ram_peak_mb": round(max(ram_values), 2) if ram_values else 0.0,
+                "gpu_average_memory_mb": round(float(sum(gpu_mem_values) / len(gpu_mem_values)), 2) if gpu_mem_values else 0.0,
+                "gpu_peak_memory_mb": round(max(gpu_mem_values), 2) if gpu_mem_values else 0.0,
+            }
+            return summary
 
         except Exception as e:
             print(f"[TraceML] Process summary error: {e}", file=sys.stderr)
-            return {"error": str(e), "total_process_samples": 0}
-
-        return summary
+            return {
+                "error": str(e),
+                "total_process_samples": 0,
+            }
