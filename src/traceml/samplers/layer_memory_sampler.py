@@ -1,86 +1,134 @@
+from dataclasses import dataclass, field
+from collections import deque
 import torch
 import gc
 import sys
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional, Deque, Set
+
+from scipy.linalg import fiedler
+
 from .base_sampler import BaseSampler
 from traceml.utils.patch import get_model_queue
 
 
+@dataclass
+class ModelMemorySnapshot:
+    model_index: int = -1
+    total_memory: float = 0.0
+    layer_memory: Dict[str, float] = field(default_factory=dict)
+    model_signature: Optional[str] = None
+    error: Optional[str] = None
+
+    @classmethod
+    def error_snapshot(cls, message: str) -> "ModelMemorySnapshot":
+        """
+        Create a dummy snapshot with an error message.
+        """
+        return cls(error=message)
+
+
 class LayerMemorySampler(BaseSampler):
     """
-    A memory sampler that tracks parameter memory usage of PyTorch models at a per-layer level.
-    This sampler operates in two modes:
+    Sampler that tracks parameter memory usage of PyTorch models at a per-layer level.
 
-    1. **Queue-based Sampling** (Preferred):
-       If models are explicitly queued using the `@trace_model` decorator or the `trace__model()` function,
-       this sampler will iterate over the queue and analyze each queued model without removing them.
-       It ensures that each unique model (based on parameter signature) is only sampled once.
+    Modes:
+      1) Queue-based (preferred): iterate non-destructively over a traced model queue.
+      2) GC fallback: scan live objects for the largest nn.Module.
 
-    2. **GC-based Fallback**:
-       If the queue is empty (i.e., decorators are not used), the sampler will scan all live objects
-       in memory using Python's garbage collector to find the largest `nn.Module` instance.
-       This fallback helps default structure
-
-    In both modes, a unique signature for each model is generated based on the shape of its parameters.
-    This ensures deduplication and prevents redundant memory profiling.
-
-    Memory usage is calculated per layer and aggregated to provide total memory footprint in megabytes (MB).
-    Sampled snapshots are stored for historical tracking and summary reporting.
+    Each unique model is deduplicated via a signature derived from parameter shapes.
+    Snapshots are stored with capped history and exposed via get_summary().
     """
 
+
     def __init__(self):
-        """Initialize internal state for tracking model memory usage."""
         super().__init__()
-        self.seen_signatures = set()  # set of previously seen model signatures
-        self.memory_snapshots: List[Dict[str, Any]] = []
-        self._latest_snapshot: Dict[str, Any] = {}
-        self.total_samples = 0
+        # Deduplication store for seen models
+        self.seen_signatures: Set[Tuple] = set()
+        # Capped sampling history
+        self.memory_history: Deque[ModelMemorySnapshot] = deque(maxlen=10_000)
+        # Latest snapshot
+        self._latest_snapshot: ModelMemorySnapshot = None
+        # Counters
+        self.total_samples: int = 0
 
     def _get_model_signature(self, model: torch.nn.Module) -> Tuple:
         """
         Generate a unique signature for the model.
         """
-        try:
-            return tuple((name, tuple(p.shape)) for name, p in model.named_parameters())
-        except Exception:
-            return ()
+        return tuple((name, tuple(p.shape)) for name, p in model.named_parameters())
 
-    def _sample_model(self, model: torch.nn.Module) -> Dict[str, Any]:
+
+    def _build_snapshot_from_model(self, model: torch.nn.Module, signature: Tuple) -> ModelMemorySnapshot:
+        """
+        Compute per-layer parameter memory (MB) and aggregate total.
+        """
+        layer_memory: Dict[str, float] = {}
+        total_memory = 0.0
+
+        for name, param in model.named_parameters():
+            # element_size() returns bytes per element; nelement() is count
+            memory = (param.element_size() * param.nelement()) / (1024 ** 2)
+            memory = round(float(memory), 4)
+            layer_memory[name] = memory
+            total_memory += memory
+
+        snapshot = ModelMemorySnapshot(
+            model_index=len(self.seen_signatures),
+            total_memory=round(float(total_memory), 4),
+            layer_memory=layer_memory,
+            model_signature=str(signature),
+            error=None,
+        )
+        return snapshot
+
+
+
+    def _get_model_memory(self, model: torch.nn.Module) -> ModelMemorySnapshot:
         """Compute memory usage of a single model if it hasn't been sampled before."""
         try:
             signature = self._get_model_signature(model)
             if signature in self.seen_signatures:
                 return None
+
             self.seen_signatures.add(signature)
-            snapshot = {}
-            total_memory_mb = 0.0
-            for name, param in model.named_parameters():
-                mem_mb = param.element_size() * param.nelement() / (1024 ** 2)
-                snapshot[name] = round(mem_mb, 4)
-                total_memory_mb += mem_mb
-
-            snapshot_data = {
-                "model_index": len(self.seen_signatures),
-                "total_memory_mb": round(total_memory_mb, 4),
-                "layer_memory_mb": snapshot,
-                "model_signature": str(signature),
-            }
-
-            self._latest_snapshot = snapshot_data
-            self.memory_snapshots.append(snapshot_data)
+            snapshot = self._build_snapshot_from_model(model, signature)
+            self._latest_snapshot = snapshot
+            self.memory_history.append(snapshot)
             self.total_samples += 1
-            return snapshot_data
+            return snapshot
 
         except Exception as e:
             print(f"[TraceML] Error sampling model: {e}", file=sys.stderr)
+            return ModelMemorySnapshot.error_snapshot(e)
+
+
+    def _sample_from_queue(self) -> Optional[ModelMemorySnapshot]:
+        """Destructively iterate the traced model queue and sample the first unseen model."""
+        try:
+            queue = get_model_queue()
+            if queue.empty():
+                return None
+
+            while not queue.empty():
+                model = queue.get_nowait()
+                snap = self._get_model_memory(model)
+                if snap is not None:
+                    return snap
+
             return None
 
-    def _sample_from_gc(self) -> Dict[str, Any]:
+        except Exception as e:
+            print(f"[TraceML] Queue sampling failed: {e}", file=sys.stderr)
+            return  None
+
+
+    def _sample_from_gc(self) -> Optional[ModelMemorySnapshot]:
         """
         Search all objects in memory for the largest nn.Module.
         """
         try:
-            candidates = []
+            candidates: List[Tuple[int, int, torch.nn.Module]] = []
+
             for obj in gc.get_objects():
                 try:
                     if isinstance(obj, torch.nn.Module):
@@ -90,25 +138,15 @@ class LayerMemorySampler(BaseSampler):
                     continue
 
             if not candidates:
-                return {
-                    "model_index": -1,
-                    "total_memory_mb": 0.0,
-                    "layer_memory_mb": {},
-                    "model_signature": "no_model_found",
-                }
+                return None
 
             candidates.sort(reverse=True)
-            return self._sample_model(candidates[0][2]) or self._latest_snapshot
+            return self._get_model_memory(candidates[0][2])
 
         except Exception as e:
             print(f"[TraceML] GC scan failed: {e}", file=sys.stderr)
-            return {
-                "model_index": -1,
-                "total_memory_mb": 0.0,
-                "layer_memory_mb": {},
-                "model_signature": "gc_error",
-                "error": str(e)
-            }
+            return None
+
 
     def sample(self) -> Dict[str, Any]:
         """
@@ -116,16 +154,25 @@ class LayerMemorySampler(BaseSampler):
         Falls back to garbage-collected models otherwise.
         Returns the latest new snapshot or the last seen one.
         """
-        queue = get_model_queue()
+        snap = self._sample_from_queue()
+        if snap is None:
+            snap = self._sample_from_gc()
 
-        if not queue.empty():
-            for model in list(queue.queue):  # non-destructive iteration
-                result = self._sample_model(model)
-                if result:
-                    return result  # return first new snapshot
-            return self._latest_snapshot
+        if isinstance(snap, ModelMemorySnapshot):
+            self._latest_snapshot = snap
 
-        return self._sample_from_gc()
+        if self._latest_snapshot is not None:
+            ok = self._latest_snapshot.error is None
+            message = "sampled successfully" if ok else f"sampling completed with error: {self._latest_snapshot.error}"
+            envelope = self.make_snapshot(
+                ok=ok,
+                message=message,
+                source="layer_memory",
+                data=self._latest_snapshot.__dict__,
+            )
+            return envelope
+        return {}
+
 
     def get_summary(self) -> Dict[str, Any]:
         """
@@ -135,10 +182,10 @@ class LayerMemorySampler(BaseSampler):
         avg_total_memory = 0.0
         max_total_memory = 0.0
 
-        if self.memory_snapshots:
-            total_memory_values = [snap["total_memory_mb"] for snap in self.memory_snapshots]
-            avg_total_memory = round(sum(total_memory_values) / len(total_memory_values), 4)
-            max_total_memory = round(max(total_memory_values), 4)
+        if self.total_samples:
+            totals = [s.total_memory for s in self.memory_history if s.error is None]
+            avg_total_memory = round(float(sum(totals) / len(totals)), 4) if totals else 0.0
+            max_total_memory = round(max(totals), 4) if totals else 0.0
 
         return {
             "total_models_seen": total_models,
