@@ -170,8 +170,14 @@ class LayerMemorySampler(BaseSampler):
                 source="layer_memory",
                 data=self._latest_snapshot.__dict__,
             )
-            return envelope
-        return {}
+        else:
+            envelope =  self.make_snapshot(
+                ok=False,
+                message=f"sampling failed: {e}",
+                source="process",
+                data=None,
+            )
+        return self.snapshot_dict(envelope)
 
 
     def get_summary(self) -> Dict[str, Any]:
