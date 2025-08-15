@@ -173,7 +173,7 @@ class LayerMemorySampler(BaseSampler):
         else:
             envelope =  self.make_snapshot(
                 ok=False,
-                message=f"sampling failed: {e}",
+                message=f"no model found",
                 source="process",
                 data=None,
             )

@@ -20,18 +20,13 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
         super().__init__(name="Layer Memory", layout_section_name=MODEL_SUMMARY_LAYOUT_NAME)
 
         self._latest_snapshot: Dict[str, Any] = {}
-        self._history_snapshots: List[Dict[str, Any]] = []
 
-    def log(self, snapshot: Dict[str, Any]):
+    def log(self, snapshot_dict: Dict[str, Any]):
         """
         Update both live snapshot and model history.
         """
-        self._latest_snapshot = snapshot
-
-        signature = snapshot.get("model_signature", None)
-        if signature and signature not in {s.get("model_signature", None) for s in self._history_snapshots}:
-            self._history_snapshots.append(snapshot)
-
+        self._latest_env = snapshot_dict
+        self._latest_snapshot = snapshot_dict.get("data") or {}
         StdoutDisplayManager.update_display()
 
     def _get_panel_renderable(self) -> Panel:
@@ -42,11 +37,11 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
         table.add_column("Layer", justify="left")
         table.add_column("Memory (MB)", justify="right")
 
-        layer_data = self._latest_snapshot.get("layer_memory_mb", {})
+        layer_data = self._latest_snapshot.get("layer_memory", {})
         for layer_name, mem_mb in layer_data.items():
             table.add_row(layer_name, f"{mem_mb:.4f}")
 
-        total_mb = self._latest_snapshot.get("total_memory_mb", 0.0)
+        total_mb = self._latest_snapshot.get("total_memory", 0.0)
         model_index = self._latest_snapshot.get("model_index", "No model found")
 
         return Panel(
