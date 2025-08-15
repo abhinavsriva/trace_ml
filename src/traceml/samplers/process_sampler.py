@@ -1,9 +1,9 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from collections import deque
 import psutil
 import os
 import sys
-from typing import List, Dict, Any, Optional, Deque
+from typing import Dict, Any, Optional, Deque
 from .base_sampler import BaseSampler
 
 from pynvml import (
