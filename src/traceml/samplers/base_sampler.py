@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, Optional
 import time
 
+
 @dataclass
 class SampleSnapshot:
     ok: bool
@@ -10,6 +11,7 @@ class SampleSnapshot:
     ts: float = field(default_factory=time.time)
     source: str = ""
     data: Optional[dict] = None
+
 
 class BaseSampler(ABC):
     """
@@ -24,7 +26,9 @@ class BaseSampler(ABC):
         pass
 
     @staticmethod
-    def make_snapshot(ok: bool, message: str, source: str, data: Optional[dict] = None) -> SampleSnapshot:
+    def make_snapshot(
+        ok: bool, message: str, source: str, data: Optional[dict] = None
+    ) -> SampleSnapshot:
         return SampleSnapshot(ok=ok, message=message, source=source, data=data)
 
     @staticmethod

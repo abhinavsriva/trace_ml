@@ -29,7 +29,7 @@ class SimpleMLP(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim)
+            nn.Linear(hidden_dim, output_dim),
         )
 
     def forward(self, x):
@@ -47,7 +47,6 @@ def test_system_sampler_with_pytorch_model():
     layer_memory_sampler = LayerMemorySampler()
     activation_memory_sampler = ActivationMemorySampler()
 
-
     system_stdout_logger = SystemStdoutLogger()
     process_stdout_logger = ProcessStdoutLogger()
     layer_memory_stdout_logger = LayerMemoryStdoutLogger()
@@ -57,7 +56,7 @@ def test_system_sampler_with_pytorch_model():
         (system_sampler, [system_stdout_logger]),
         (process_sampler, [process_stdout_logger]),
         (layer_memory_sampler, [layer_memory_stdout_logger]),
-        (activation_memory_sampler, [activation_memory_logger])
+        (activation_memory_sampler, [activation_memory_logger]),
     ]
     tracker = TrackerManager(components=tracker_components, interval_sec=0.5)
 
@@ -92,7 +91,10 @@ def test_system_sampler_with_pytorch_model():
             iteration += 1
             time.sleep(0.01)  # Allow samplers to run without contention
 
-        print(f"\n[TraceML Test] Training completed after {iteration} iterations.", file=sys.stderr)
+        print(
+            f"\n[TraceML Test] Training completed after {iteration} iterations.",
+            file=sys.stderr,
+        )
 
     except Exception as e:
         print(f"[TraceML Test] Error during test execution: {e}", file=sys.stderr)
@@ -102,7 +104,10 @@ def test_system_sampler_with_pytorch_model():
         tracker.stop()
         tracker.log_summaries()
 
-    print(f"\n[TraceML Test] PyTorch model memory tracking test passed successfully.", file=sys.stderr)
+    print(
+        f"\n[TraceML Test] PyTorch model memory tracking test passed successfully.",
+        file=sys.stderr,
+    )
 
 
 if __name__ == "__main__":

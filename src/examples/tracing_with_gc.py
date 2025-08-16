@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.optim as optim
 
 
-
 # Define a simple CNN model
 class SimpleCNN(nn.Module):
     def __init__(self):
@@ -69,4 +68,4 @@ def main():
 
 
 if __name__ == "__main__":
-        main()
+    main()

@@ -19,7 +19,6 @@ MODEL_SUMMARY_LAYOUT_NAME = "current_model_summary_section"
 ACTIVATION_SUMMARY_LAYOUT_NAME = "activation_memory_summary_section"
 
 
-
 class StdoutDisplayManager:
     """
     Manages a single shared Rich Live display and a dynamic Layout for all stdout loggers.
@@ -44,7 +43,7 @@ class StdoutDisplayManager:
         Defines the improved structure of the Rich Layout with flexible ratios.
         """
         cls._layout.split_column(
-    Layout(name=SYSTEM_LAYOUT_NAME),
+            Layout(name=SYSTEM_LAYOUT_NAME),
             Layout(name=PROCESS_LAYOUT_NAME),
             Layout(name=MODEL_SUMMARY_LAYOUT_NAME),
             Layout(name=ACTIVATION_SUMMARY_LAYOUT_NAME),
@@ -96,9 +95,7 @@ class StdoutDisplayManager:
             try:
                 cls._live_display.stop()
             except Exception as e:
-                print(
-                    f"[TraceML] Error stopping live display: {e}", file=sys.stderr
-                )
+                print(f"[TraceML] Error stopping live display: {e}", file=sys.stderr)
             finally:
                 cls._live_display = None
                 cls._layout_content_fns.clear()
@@ -116,7 +113,9 @@ class StdoutDisplayManager:
                 cls.stop_display()
 
     @classmethod
-    def register_layout_content(cls, layout_section: str, content_fn: Callable[[], Any]):
+    def register_layout_content(
+        cls, layout_section: str, content_fn: Callable[[], Any]
+    ):
         """
         Registers a function that provides content for a specific layout panel.
         """

@@ -1,7 +1,7 @@
 from rich.text import Text
 from rich.panel import Panel
 from rich.table import Table
-from typing import Dict, Any,  Optional
+from typing import Dict, Any, Optional
 from rich.console import Console
 
 import psutil
@@ -9,6 +9,7 @@ import psutil
 from .base_logger import BaseStdoutLogger
 from .display_manager import PROCESS_LAYOUT_NAME
 from .display_manager import StdoutDisplayManager
+
 
 class ProcessStdoutLogger(BaseStdoutLogger):
     """
@@ -21,7 +22,7 @@ class ProcessStdoutLogger(BaseStdoutLogger):
         self._latest_snapshot = {
             "process_cpu_percent": 0.0,
             "process_ram": 0.0,
-            "process_gpu_memory": None
+            "process_gpu_memory": None,
         }
 
         # Detect system CPU topology at logger initialization
@@ -29,8 +30,7 @@ class ProcessStdoutLogger(BaseStdoutLogger):
         self.physical_cores = psutil.cpu_count(logical=False)
         self.hyperthreaded = self.logical_cores > self.physical_cores
         self.threads_per_core = (
-            self.logical_cores // self.physical_cores
-            if self.physical_cores else 1
+            self.logical_cores // self.physical_cores if self.physical_cores else 1
         )
 
     def _fmt_percent(self, v: Any) -> str:
@@ -60,7 +60,9 @@ class ProcessStdoutLogger(BaseStdoutLogger):
         table.add_column(justify="center", style="bold magenta")
         table.add_column(justify="center", style="bold cyan")
 
-        cpu_display_str = f"CPU ({self.logical_cores} cores): {self._fmt_percent(cpu_val)}"
+        cpu_display_str = (
+            f"CPU ({self.logical_cores} cores): {self._fmt_percent(cpu_val)}"
+        )
         ram_display_str = f"RAM: {self._fmt_mem_mb(ram_val)}"
 
         table.add_row(cpu_display_str, ram_display_str)
@@ -76,7 +78,6 @@ class ProcessStdoutLogger(BaseStdoutLogger):
             border_style="dim white",
             width=80,
         )
-
 
     def log_summary(self, summary: Dict[str, Any]):
         """
@@ -104,7 +105,9 @@ class ProcessStdoutLogger(BaseStdoutLogger):
                 except Exception:
                     return "N/A"
             # Memory in MB
-            if any(sub in key for sub in ("ram_", "gpu_", "memory")) and key.endswith("_mb"):
+            if any(sub in key for sub in ("ram_", "gpu_", "memory")) and key.endswith(
+                "_mb"
+            ):
                 try:
                     return f"{float(value):.2f} MB"
                 except Exception:
@@ -119,9 +122,11 @@ class ProcessStdoutLogger(BaseStdoutLogger):
             return str(value)
 
         for key, value in summary.items():
-            display_key = key.replace('_', ' ').upper()
+            display_key = key.replace("_", " ").upper()
             display_value = fmt_pair(key, value)
             table.add_row(display_key, "[cyan]|[/cyan]", display_value)
 
-        panel = Panel(table, title=f"[bold cyan]{self.name} - Final Summary", border_style="cyan")
+        panel = Panel(
+            table, title=f"[bold cyan]{self.name} - Final Summary", border_style="cyan"
+        )
         console.print(panel)

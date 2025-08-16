@@ -9,6 +9,7 @@ from traceml.utils.patch import (
     attach_activation_hooks,
 )
 
+
 def trace_model(
     sample_layer_memory: bool = True,
     trace_activations: bool = True,
@@ -27,7 +28,9 @@ def trace_model(
 
     def decorator(cls):
         if not isinstance(cls, type) or not issubclass(cls, nn.Module):
-            raise TypeError("@trace_model can only be applied to nn.Module subclasses for now.")
+            raise TypeError(
+                "@trace_model can only be applied to nn.Module subclasses for now."
+            )
 
         original_init = cls.__init__
 
@@ -45,13 +48,15 @@ def trace_model(
 
         cls.__init__ = wrapped_init
         return cls
+
     return decorator
 
+
 def trace_model_instance(
-        model: nn.Module,
-        sample_layer_memory: bool = True,
-        trace_activations: bool = True,
-        trace_gradients: bool = False,
+    model: nn.Module,
+    sample_layer_memory: bool = True,
+    trace_activations: bool = True,
+    trace_gradients: bool = False,
 ):
     """
     Manually trace a PyTorch model instance (useful for functional or sequential models).

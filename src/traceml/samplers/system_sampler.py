@@ -21,6 +21,7 @@ from pynvml import (
 class CPUSample:
     percent: float
 
+
 @dataclass
 class RAMSample:
     percent: float
@@ -28,16 +29,19 @@ class RAMSample:
     available: float
     total: float
 
+
 @dataclass
 class GPUSample:
     util_percent: float
     mem_used: float
+
 
 @dataclass
 class PerGPUState:
     total_mem: float
     util: Deque[float] = field(default_factory=lambda: deque(maxlen=10_000))
     mem_used: Deque[float] = field(default_factory=lambda: deque(maxlen=10_000))
+
 
 @dataclass
 class Snapshot:
@@ -51,7 +55,6 @@ class Snapshot:
     gpu_util_avg: Optional[float] = None
     gpu_mem_used_total: Optional[float] = None
     gpu_mem_total: Optional[float] = None
-
 
 
 class SystemSampler(BaseSampler):
@@ -99,7 +102,7 @@ class SystemSampler(BaseSampler):
             for i in range(self.gpu_count):
                 try:
                     handle = nvmlDeviceGetHandleByIndex(i)
-                    total_mb = float(nvmlDeviceGetMemoryInfo(handle).total) / (1024 ** 2)
+                    total_mb = float(nvmlDeviceGetMemoryInfo(handle).total) / (1024**2)
                 except Exception:
                     total_mb = 0.0
                 self.gpus[i] = PerGPUState(total_mem=total_mb)
@@ -123,9 +126,9 @@ class SystemSampler(BaseSampler):
             # RAM usage
             mem = psutil.virtual_memory()
             ram_percent_used = float(mem.percent)
-            ram_used = float(mem.used) / (1024 ** 2)
-            ram_available = float(mem.available) / (1024 ** 2)
-            ram_total = float(mem.total) / (1024 ** 2)
+            ram_used = float(mem.used) / (1024**2)
+            ram_available = float(mem.available) / (1024**2)
+            ram_total = float(mem.total) / (1024**2)
 
             # Store raw samples for summary calculation
             self.cpu_history.append(CPUSample(percent=cpu_usage))
@@ -158,8 +161,8 @@ class SystemSampler(BaseSampler):
                         meminfo = nvmlDeviceGetMemoryInfo(handle)
 
                         util_pct = float(util.gpu)
-                        used_mb = float(meminfo.used) / (1024 ** 2)
-                        total_mb = float(meminfo.total) / (1024 ** 2)
+                        used_mb = float(meminfo.used) / (1024**2)
+                        total_mb = float(meminfo.total) / (1024**2)
 
                         if i not in self.gpus:
                             self.gpus[i] = PerGPUState(total_mem=total_mb)
@@ -174,23 +177,47 @@ class SystemSampler(BaseSampler):
                         gpu_mem_total.append(total_mb)
 
                     except NVMLError as e:
-                        print(f"[TraceML] NVML read failed for GPU {i}: {e}", file=sys.stderr)
+                        print(
+                            f"[TraceML] NVML read failed for GPU {i}: {e}",
+                            file=sys.stderr,
+                        )
                     except Exception as e:
-                        print(f"[TraceML] Unexpected error reading GPU {i}: {e}", file=sys.stderr)
+                        print(
+                            f"[TraceML] Unexpected error reading GPU {i}: {e}",
+                            file=sys.stderr,
+                        )
 
-                util_arr = np.array(gpu_utils, dtype=float) if gpu_utils else np.array([], dtype=float)
-                mem_used_arr = np.array(gpu_mem_used, dtype=float) if gpu_mem_used else np.array([], dtype=float)
-                mem_total_arr = np.array(gpu_mem_total, dtype=float) if gpu_mem_total else np.array([], dtype=float)
+                util_arr = (
+                    np.array(gpu_utils, dtype=float)
+                    if gpu_utils
+                    else np.array([], dtype=float)
+                )
+                mem_used_arr = (
+                    np.array(gpu_mem_used, dtype=float)
+                    if gpu_mem_used
+                    else np.array([], dtype=float)
+                )
+                mem_total_arr = (
+                    np.array(gpu_mem_total, dtype=float)
+                    if gpu_mem_total
+                    else np.array([], dtype=float)
+                )
 
                 avg_util = float(np.mean(util_arr)) if util_arr.size else 0.0
                 max_util = float(np.max(util_arr)) if util_arr.size else 0.0
                 nonzero_utils = util_arr[util_arr > 0]
-                min_nonzero_util = float(np.min(nonzero_utils)) if nonzero_utils.size else 0.0
-                imbalance_util = (max_util / min_nonzero_util) if min_nonzero_util > 0 else None
+                min_nonzero_util = (
+                    float(np.min(nonzero_utils)) if nonzero_utils.size else 0.0
+                )
+                imbalance_util = (
+                    (max_util / min_nonzero_util) if min_nonzero_util > 0 else None
+                )
 
                 highest_mem = float(np.max(mem_used_arr)) if mem_used_arr.size else 0.0
                 nonzero_mem = mem_used_arr[mem_used_arr > 0]
-                lowest_nonzero_mem = float(np.min(nonzero_mem)) if nonzero_mem.size else 0.0
+                lowest_nonzero_mem = (
+                    float(np.min(nonzero_mem)) if nonzero_mem.size else 0.0
+                )
 
                 # Count GPUs under high pressure (>90% of its own total)
                 count_high_pressure = 0
@@ -204,16 +231,26 @@ class SystemSampler(BaseSampler):
                 if mem_total_arr.size:
                     self.gpu_mem_total_avg_history.append(float(np.mean(mem_total_arr)))
 
-                current_sample.update({
-                    "gpu_total_count": self.gpu_count,
-                    "gpu_util_avg_percent": round(avg_util, 2),
-                    "gpu_util_min_nonzero_percent": round(min_nonzero_util, 2) if min_nonzero_util else 0.0,
-                    "gpu_util_max_percent": round(max_util, 2),
-                    "gpu_util_imbalance_ratio": round(imbalance_util, 2) if imbalance_util is not None else None,
-                    "gpu_memory_highest_used": round(highest_mem, 2),
-                    "gpu_memory_lowest_nonzero_used": round(lowest_nonzero_mem, 2) if lowest_nonzero_mem else 0.0,
-                    "gpu_count_high_pressure": count_high_pressure,
-                })
+                current_sample.update(
+                    {
+                        "gpu_total_count": self.gpu_count,
+                        "gpu_util_avg_percent": round(avg_util, 2),
+                        "gpu_util_min_nonzero_percent": (
+                            round(min_nonzero_util, 2) if min_nonzero_util else 0.0
+                        ),
+                        "gpu_util_max_percent": round(max_util, 2),
+                        "gpu_util_imbalance_ratio": (
+                            round(imbalance_util, 2)
+                            if imbalance_util is not None
+                            else None
+                        ),
+                        "gpu_memory_highest_used": round(highest_mem, 2),
+                        "gpu_memory_lowest_nonzero_used": (
+                            round(lowest_nonzero_mem, 2) if lowest_nonzero_mem else 0.0
+                        ),
+                        "gpu_count_high_pressure": count_high_pressure,
+                    }
+                )
 
                 # Maintain a typed Snapshot for internal use
             self.latest = Snapshot(
@@ -224,11 +261,21 @@ class SystemSampler(BaseSampler):
                 ram_total=float(current_sample["ram_total"]),
                 gpu_available=self.gpu_available,
                 gpu_count=self.gpu_count,
-                gpu_util_avg=float(current_sample.get("gpu_util_avg_percent", 0.0)) if self.gpu_available else None,
-                gpu_mem_used_total=float(
-                    current_sample.get("gpu_memory_highest_used", 0.0)) if self.gpu_available else None,
-                gpu_mem_total=float(self.gpu_mem_total_avg_history[-1]) if (
-                            self.gpu_available and self.gpu_mem_total_avg_history) else None,
+                gpu_util_avg=(
+                    float(current_sample.get("gpu_util_avg_percent", 0.0))
+                    if self.gpu_available
+                    else None
+                ),
+                gpu_mem_used_total=(
+                    float(current_sample.get("gpu_memory_highest_used", 0.0))
+                    if self.gpu_available
+                    else None
+                ),
+                gpu_mem_total=(
+                    float(self.gpu_mem_total_avg_history[-1])
+                    if (self.gpu_available and self.gpu_mem_total_avg_history)
+                    else None
+                ),
             )
 
             # Return envelope via BaseSampler helpers
@@ -267,11 +314,17 @@ class SystemSampler(BaseSampler):
             ram_avail_values = [s.available for s in self.ram_history]
             ram_total_values = [s.total for s in self.ram_history]
 
-            ram_avg_pct = float(np.mean(ram_percent_values)) if ram_percent_values else 0.0
-            ram_peak_pct = float(np.max(ram_percent_values)) if ram_percent_values else 0.0
+            ram_avg_pct = (
+                float(np.mean(ram_percent_values)) if ram_percent_values else 0.0
+            )
+            ram_peak_pct = (
+                float(np.max(ram_percent_values)) if ram_percent_values else 0.0
+            )
             ram_avg_used = float(np.mean(ram_used_values)) if ram_used_values else 0.0
             ram_peak_used = float(np.max(ram_used_values)) if ram_used_values else 0.0
-            ram_avg_avail = float(np.mean(ram_avail_values)) if ram_avail_values else 0.0
+            ram_avg_avail = (
+                float(np.mean(ram_avail_values)) if ram_avail_values else 0.0
+            )
             ram_min_avail = float(np.min(ram_avail_values)) if ram_avail_values else 0.0
             ram_total_mb = float(ram_total_values[0]) if ram_total_values else 0.0
 
@@ -296,37 +349,59 @@ class SystemSampler(BaseSampler):
                     all_mem_usages.extend(state.mem_used)
                     nonzero_mem_usages.extend([u for u in state.mem_used if u > 0])
 
-                all_mem_arr = np.array(all_mem_usages, dtype=float) if all_mem_usages else np.array([], dtype=float)
-                nonzero_mem_arr = np.array(nonzero_mem_usages, dtype=float) if nonzero_mem_usages else np.array([], dtype=float)
+                all_mem_arr = (
+                    np.array(all_mem_usages, dtype=float)
+                    if all_mem_usages
+                    else np.array([], dtype=float)
+                )
+                nonzero_mem_arr = (
+                    np.array(nonzero_mem_usages, dtype=float)
+                    if nonzero_mem_usages
+                    else np.array([], dtype=float)
+                )
 
                 global_peak = float(np.max(all_mem_arr)) if all_mem_arr.size else 0.0
-                global_min_nonzero = float(np.min(nonzero_mem_arr)) if nonzero_mem_arr.size else 0.0
+                global_min_nonzero = (
+                    float(np.min(nonzero_mem_arr)) if nonzero_mem_arr.size else 0.0
+                )
                 avg_mem = float(np.mean(all_mem_arr)) if all_mem_arr.size else 0.0
-                var_mem = float(np.var(all_mem_arr, ddof=1)) if all_mem_arr.size > 1 else 0.0
+                var_mem = (
+                    float(np.var(all_mem_arr, ddof=1)) if all_mem_arr.size > 1 else 0.0
+                )
 
-                util_arr = np.array(self.gpu_util_avg_history, dtype=float) if self.gpu_util_avg_history else np.array([], dtype=float)
+                util_arr = (
+                    np.array(self.gpu_util_avg_history, dtype=float)
+                    if self.gpu_util_avg_history
+                    else np.array([], dtype=float)
+                )
                 average_gpu_util = float(np.mean(util_arr)) if util_arr.size else 0.0
                 peak_gpu_util = float(np.max(util_arr)) if util_arr.size else 0.0
 
-                summary.update({
-                    "gpu_total_count": self.gpu_count,
-                    "gpu_average_util_percent": round(average_gpu_util, 2),
-                    "gpu_peak_util_percent": round(peak_gpu_util, 2),
-                    "gpu_memory_global_peak_used": round(global_peak, 2),
-                    "gpu_memory_global_lowest_nonzero_used": round(global_min_nonzero, 2),
-                    "gpu_memory_average_used": round(avg_mem, 2),
-                    "gpu_memory_variance": round(var_mem, 2),
-                })
+                summary.update(
+                    {
+                        "gpu_total_count": self.gpu_count,
+                        "gpu_average_util_percent": round(average_gpu_util, 2),
+                        "gpu_peak_util_percent": round(peak_gpu_util, 2),
+                        "gpu_memory_global_peak_used": round(global_peak, 2),
+                        "gpu_memory_global_lowest_nonzero_used": round(
+                            global_min_nonzero, 2
+                        ),
+                        "gpu_memory_average_used": round(avg_mem, 2),
+                        "gpu_memory_variance": round(var_mem, 2),
+                    }
+                )
             else:
-                summary.update({
-                    "gpu_total_count": self.gpu_count,
-                    "gpu_average_util_percent": 0.0,
-                    "gpu_peak_util_percent": 0.0,
-                    "gpu_memory_global_peak_used_mb": 0.0,
-                    "gpu_memory_global_lowest_nonzero_used_mb": 0.0,
-                    "gpu_memory_average_used_mb": 0.0,
-                    "gpu_memory_variance_mb": 0.0,
-                })
+                summary.update(
+                    {
+                        "gpu_total_count": self.gpu_count,
+                        "gpu_average_util_percent": 0.0,
+                        "gpu_peak_util_percent": 0.0,
+                        "gpu_memory_global_peak_used_mb": 0.0,
+                        "gpu_memory_global_lowest_nonzero_used_mb": 0.0,
+                        "gpu_memory_average_used_mb": 0.0,
+                        "gpu_memory_variance_mb": 0.0,
+                    }
+                )
 
             return summary
 
@@ -336,4 +411,3 @@ class SystemSampler(BaseSampler):
                 "error": str(e),
                 "total_system_samples": 0,
             }
-

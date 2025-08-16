@@ -14,24 +14,27 @@ from pynvml import (
     NVMLError,
 )
 
+
 @dataclass
 class ProcessCPUSample:
     percent: float
+
 
 @dataclass
 class ProcessRAMSample:
     used: float
 
+
 @dataclass
 class ProcessGPUMemSample:
     used: float
+
 
 @dataclass
 class ProcessSnapshot:
     process_cpu_percent: float
     process_ram: float
     process_gpu_memory: Optional[float] = None
-
 
 
 class ProcessSampler(BaseSampler):
@@ -68,11 +71,12 @@ class ProcessSampler(BaseSampler):
             self.gpu_count = nvmlDeviceGetCount()
             self.gpu_available = True
         except NVMLError as e:
-            print(f"[TraceML] WARNING: NVML GPU support unavailable: {e}", file=sys.stderr)
+            print(
+                f"[TraceML] WARNING: NVML GPU support unavailable: {e}", file=sys.stderr
+            )
 
         # Latest snapshot
         self.latest: Optional[ProcessSnapshot] = None
-
 
     def _get_process_gpu_memory(self) -> Optional[float]:
         """Return the GPU memory (in MB) used by this process, or None if unavailable."""
@@ -85,13 +89,14 @@ class ProcessSampler(BaseSampler):
                 procs = nvmlDeviceGetComputeRunningProcesses(handle)
                 for proc in procs:
                     if proc.pid == self.pid:
-                        return proc.usedGpuMemory / (1024 ** 2)
+                        return proc.usedGpuMemory / (1024**2)
         except NVMLError as e:
             print(f"[TraceML] NVML GPU memory read failed: {e}", file=sys.stderr)
         except Exception as e:
-            print(f"[TraceML] Unexpected error reading GPU memory: {e}", file=sys.stderr)
+            print(
+                f"[TraceML] Unexpected error reading GPU memory: {e}", file=sys.stderr
+            )
         return None
-
 
     def sample(self) -> Dict[str, Any]:
         """
@@ -114,7 +119,9 @@ class ProcessSampler(BaseSampler):
             self.latest = ProcessSnapshot(
                 process_cpu_percent=round(cpu_usage, 2),
                 process_ram=round(ram_usage, 2),
-                process_gpu_memory=round(gpu_mem_usage, 2) if gpu_mem_usage is not None else None,
+                process_gpu_memory=(
+                    round(gpu_mem_usage, 2) if gpu_mem_usage is not None else None
+                ),
             )
 
             snap = self.make_snapshot(
@@ -147,12 +154,26 @@ class ProcessSampler(BaseSampler):
 
             summary: Dict[str, Any] = {
                 "total_process_samples": len(cpu_values),
-                "cpu_average_percent": round(float(sum(cpu_values) / len(cpu_values)), 2) if cpu_values else 0.0,
+                "cpu_average_percent": (
+                    round(float(sum(cpu_values) / len(cpu_values)), 2)
+                    if cpu_values
+                    else 0.0
+                ),
                 "cpu_peak_percent": round(max(cpu_values), 2) if cpu_values else 0.0,
-                "ram_average": round(float(sum(ram_values) / len(ram_values)), 2) if ram_values else 0.0,
+                "ram_average": (
+                    round(float(sum(ram_values) / len(ram_values)), 2)
+                    if ram_values
+                    else 0.0
+                ),
                 "ram_peak": round(max(ram_values), 2) if ram_values else 0.0,
-                "gpu_average_memory": round(float(sum(gpu_mem_values) / len(gpu_mem_values)), 2) if gpu_mem_values else 0.0,
-                "gpu_peak_memory": round(max(gpu_mem_values), 2) if gpu_mem_values else 0.0,
+                "gpu_average_memory": (
+                    round(float(sum(gpu_mem_values) / len(gpu_mem_values)), 2)
+                    if gpu_mem_values
+                    else 0.0
+                ),
+                "gpu_peak_memory": (
+                    round(max(gpu_mem_values), 2) if gpu_mem_values else 0.0
+                ),
             }
             return summary
 

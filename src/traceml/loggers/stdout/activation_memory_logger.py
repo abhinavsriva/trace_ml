@@ -26,9 +26,10 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
     """
 
     def __init__(self, layout_section_name: str = ACTIVATION_SUMMARY_LAYOUT_NAME):
-        super().__init__(name="Activation Memory", layout_section_name=layout_section_name)
+        super().__init__(
+            name="Activation Memory", layout_section_name=layout_section_name
+        )
         self._latest_snapshot: Dict[str, Any] = {}
-        
 
     def log_summary(self, summary: Dict[str, Any]):
         """Pretty-print final cumulative summary from sampler.get_summary()."""
@@ -40,7 +41,9 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
         table.add_column(justify="right", style="bold white")
 
         ever_seen = summary.get("ever_seen", False)
-        table.add_row("EVER SEEN EVENTS", "[magenta3]|[/magenta3]", "Yes" if ever_seen else "No")
+        table.add_row(
+            "EVER SEEN EVENTS", "[magenta3]|[/magenta3]", "Yes" if ever_seen else "No"
+        )
 
         raw_kept = summary.get("raw_events_kept", 0)
         table.add_row("RAW EVENTS KEPT", "[magenta3]|[/magenta3]", str(raw_kept))
@@ -48,7 +51,9 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
         per_dev = summary.get("per_device_cumulative", {}) or {}
         if per_dev:
             table.add_row("", "", "")
-            table.add_row("[bold underline]PER-DEVICE CUMULATIVE[/bold underline]", "", "")
+            table.add_row(
+                "[bold underline]PER-DEVICE CUMULATIVE[/bold underline]", "", ""
+            )
             for dev, stats in per_dev.items():
                 c_count = stats.get("cumulative_count", 0)
                 c_sum = stats.get("cumulative_sum_mb", 0.0)
@@ -100,7 +105,13 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
         )
 
         # Per-device table
-        dev_table = Table(show_header=True, header_style="bold magenta", box=None, expand=True, padding=(0, 1))
+        dev_table = Table(
+            show_header=True,
+            header_style="bold magenta",
+            box=None,
+            expand=True,
+            padding=(0, 1),
+        )
         dev_table.add_column("Device", justify="left")
         dev_table.add_column("Avg", justify="right")
         dev_table.add_column("Max", justify="right")
@@ -114,15 +125,23 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
                     str(dev),
                     self._format_mb(stats.get("avg_mb")),
                     self._format_mb(stats.get("max_mb")),
-                    self._format_mb(stats.get("min_nonzero_mb")) if stats.get("min_nonzero_mb") is not None else "—",
+                    (
+                        self._format_mb(stats.get("min_nonzero_mb"))
+                        if stats.get("min_nonzero_mb") is not None
+                        else "—"
+                    ),
                     str(stats.get("count", 0)),
                     self._pressure_badge(stats.get("pressure_90pct")),
                 )
         else:
-            dev_table.add_row("[dim]no devices[/dim]", "—", "—", "—", "0", "[dim]n/a[/dim]")
+            dev_table.add_row(
+                "[dim]no devices[/dim]", "—", "—", "—", "0", "[dim]n/a[/dim]"
+            )
 
         if note:
-            note_panel = Panel(str(note), border_style="dim", title="Note", padding=(0, 1))
+            note_panel = Panel(
+                str(note), border_style="dim", title="Note", padding=(0, 1)
+            )
             content = Table.grid()
             content.add_row(header)
             content.add_row(dev_table)

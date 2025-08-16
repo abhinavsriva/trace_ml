@@ -14,11 +14,13 @@ activation_queue: Queue = Queue(maxsize=2048)
 # Registry to prevent multiple hook attachments per model
 _activation_hook_registry: Dict[int, bool] = {}
 
+
 @dataclass
 class ActivationEvent:
     """
     Represents a single forward-pass activation snapshot for a model layer.
     """
+
     model_id: int
     timestamp: float
     per_device_activation_memory: Dict[str, float]
@@ -39,13 +41,14 @@ def _tensor_size_mb(tensor: torch.Tensor) -> float:
     """
     Compute the memory footprint of a tensor in megabytes.
     """
-    return float(tensor.numel() * tensor.element_size()) / (1024 ** 2)
+    return float(tensor.numel() * tensor.element_size()) / (1024**2)
 
 
 class ActivationHook:
     """
     Callable class used as a forward hook to capture activation sizes for a layer.
     """
+
     def __init__(self, model_id: int, layer_name: str):
         self.model_id = model_id
         self.layer_name = layer_name
@@ -82,7 +85,10 @@ class ActivationHook:
             except Full:
                 pass  # drop if queue is full
         except Exception:
-            print(f"[TraceML] Error in ActivationHook for layer {self.layer_name}", file=sys.stderr)
+            print(
+                f"[TraceML] Error in ActivationHook for layer {self.layer_name}",
+                file=sys.stderr,
+            )
 
 
 def attach_activation_hooks(model: nn.Module):

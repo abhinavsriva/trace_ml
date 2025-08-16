@@ -61,19 +61,21 @@ class ActivationMemorySampler(BaseSampler):
         self._raw_events: Deque[Dict[str, Any]] = deque(maxlen=int(max_raw_events))
 
         # Cumulative stats: dev -> (count_samples, sum_mb, max_mb)
-        self._cumulative: Dict[str, Tuple[int, float, float]] = defaultdict(lambda: (0, 0.0, 0.0))
+        self._cumulative: Dict[str, Tuple[int, float, float]] = defaultdict(
+            lambda: (0, 0.0, 0.0)
+        )
 
         # Last live snapshot + flag to know if we ever saw any data
         self._latest_snapshot: Optional[ActivationSnapshot] = None
         self._ever_seen: bool = False
 
-
     def _append_raw_event(self, ts: float, per_dev_memory: Dict[str, float]) -> None:
         """Push one raw event into the bounded buffer (if enabled)."""
         if not self.store_raw:
             return
-        self._raw_events.append({"ts": float(ts), "per_dev_memory": dict(per_dev_memory)})
-
+        self._raw_events.append(
+            {"ts": float(ts), "per_dev_memory": dict(per_dev_memory)}
+        )
 
     def _accumulate_cumulative(self, per_dev_memory: Dict[str, float]) -> None:
         """Update cumulative counters for each device."""
@@ -81,7 +83,6 @@ class ActivationMemorySampler(BaseSampler):
             c_count, c_sum, c_max = self._cumulative[dev]
             mb_f = float(mem)
             self._cumulative[dev] = (c_count + 1, c_sum + mb_f, max(c_max, mb_f))
-
 
     @staticmethod
     def _compute_batch_stats(values: List[float]) -> _BatchStats:
@@ -107,11 +108,10 @@ class ActivationMemorySampler(BaseSampler):
         try:
             idx = int(dev.split(":", 1)[1])
             props = torch.cuda.get_device_properties(idx)
-            total_memory = props.total_memory / (1024 ** 2)
+            total_memory = props.total_memory / (1024**2)
             return (batch_max_memory / total_memory) >= self.pressure_threshold
         except Exception:
             return None
-
 
     def _drain_queue(self) -> Tuple[int, Dict[str, List[float]]]:
         """
@@ -122,7 +122,9 @@ class ActivationMemorySampler(BaseSampler):
         try:
             q = get_activation_queue()
         except Exception as e:
-            print(f"[TraceML] ERROR: activation queue unavailable: {e}", file=sys.stderr)
+            print(
+                f"[TraceML] ERROR: activation queue unavailable: {e}", file=sys.stderr
+            )
             return 0, {}
 
         drained_events = 0
@@ -135,7 +137,9 @@ class ActivationMemorySampler(BaseSampler):
             except Empty:
                 break
             except Exception as e:
-                print(f"[TraceML] WARNING: queue.get_nowait failed: {e}", file=sys.stderr)
+                print(
+                    f"[TraceML] WARNING: queue.get_nowait failed: {e}", file=sys.stderr
+                )
                 break
 
             drained_events += 1
@@ -153,7 +157,9 @@ class ActivationMemorySampler(BaseSampler):
 
         return drained_events, batch_per_dev
 
-    def _build_snapshot(self, drained_events: int, batch_per_dev: Dict[str, List[float]]) -> ActivationSnapshot:
+    def _build_snapshot(
+        self, drained_events: int, batch_per_dev: Dict[str, List[float]]
+    ) -> ActivationSnapshot:
         """Construct the live snapshot dict from this drain’s per-device values."""
         devices_out: Dict[str, Any] = {}
         overall_avg = 0.0
@@ -168,7 +174,11 @@ class ActivationMemorySampler(BaseSampler):
                 "sum_mb": round(stats.sum_memory, 4),
                 "avg_mb": round(stats.avg_memory, 4),
                 "max_mb": round(stats.max_memory, 4),
-                "min_nonzero_mb": round(stats.min_nonzero_memory, 4) if stats.min_nonzero_memory is not None else None,
+                "min_nonzero_mb": (
+                    round(stats.min_nonzero_memory, 4)
+                    if stats.min_nonzero_memory is not None
+                    else None
+                ),
                 "pressure_90pct": pressure,
             }
             overall_avg += stats.avg_memory
@@ -181,7 +191,6 @@ class ActivationMemorySampler(BaseSampler):
             drained_events=drained_events,
             stale=False,
         )
-
 
     def sample(self) -> Dict[str, Any]:
         """
@@ -223,7 +232,11 @@ class ActivationMemorySampler(BaseSampler):
             self._ever_seen = True
 
             ok = self._latest_snapshot.error is None
-            msg = "sampled successfully" if ok else f"sampling completed with error: {self._latest_snapshot.error}"
+            msg = (
+                "sampled successfully"
+                if ok
+                else f"sampling completed with error: {self._latest_snapshot.error}"
+            )
             envelope = self.make_snapshot(
                 ok=ok,
                 message=msg,
@@ -233,7 +246,10 @@ class ActivationMemorySampler(BaseSampler):
             return self.snapshot_dict(envelope)
 
         except Exception as e:
-            print(f"[TraceML] ActivationMemorySampler.sample() error: {e}", file=sys.stderr)
+            print(
+                f"[TraceML] ActivationMemorySampler.sample() error: {e}",
+                file=sys.stderr,
+            )
             snap = ActivationSnapshot.error_snapshot(e)
             envelope = self.make_snapshot(
                 ok=False,
@@ -242,7 +258,6 @@ class ActivationMemorySampler(BaseSampler):
                 data=snap.__dict__,
             )
             return self.snapshot_dict(envelope)
-
 
     def get_summary(self) -> Dict[str, Any]:
         """
@@ -268,7 +283,10 @@ class ActivationMemorySampler(BaseSampler):
             }
 
         except Exception as e:
-            print(f"[TraceML] ActivationMemorySampler.get_summary() error: {e}", file=sys.stderr)
+            print(
+                f"[TraceML] ActivationMemorySampler.get_summary() error: {e}",
+                file=sys.stderr,
+            )
             return {
                 "error": str(e),
                 "ever_seen": self._ever_seen,

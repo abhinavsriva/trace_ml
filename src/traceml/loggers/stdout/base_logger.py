@@ -38,8 +38,7 @@ class BaseStdoutLogger:
         """
         self._latest_env = snapshot_dict
         self._latest_snapshot = snapshot_dict.get("data") or {}
-        StdoutDisplayManager.update_display() # Request a global update
-
+        StdoutDisplayManager.update_display()  # Request a global update
 
     def log_summary(self, summary: Dict[str, Any]):
         """
@@ -54,4 +53,6 @@ class BaseStdoutLogger:
         The main live display is stopped globally by the TrackerManager.
         """
         StdoutDisplayManager.release_display()
-        print(f"[TraceML][{self.name}] Logger shutdown complete, {StdoutDisplayManager._active_logger_count} Loggers left.")
+        print(
+            f"[TraceML][{self.name}] Logger shutdown complete, {StdoutDisplayManager._active_logger_count} Loggers left."
+        )

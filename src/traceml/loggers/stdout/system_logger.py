@@ -78,7 +78,9 @@ class SystemStdoutLogger(BaseStdoutLogger):
                 ram_pct = f" ({float(ram_used)/float(ram_total)*100:.1f}%)"
         except Exception:
             ram_pct = ""
-        table.add_row(f"RAM: [white]{self._format_memory(ram_used)}/{self._format_memory(ram_total)}{ram_pct}[/white]")
+        table.add_row(
+            f"RAM: [white]{self._format_memory(ram_used)}/{self._format_memory(ram_total)}{ram_pct}[/white]"
+        )
 
         # GPU UTILIZATION block
         if gpu_util_avg is not None:
@@ -86,14 +88,24 @@ class SystemStdoutLogger(BaseStdoutLogger):
             table.add_row("[bold magenta]GPU UTILIZATION:[/bold magenta]")
             table.add_row(f"  AVG: [white]{self._format_percent(gpu_util_avg)}[/white]")
             if gpu_util_min not in (None, 0):
-                table.add_row(f"  MIN: [white]{self._format_percent(gpu_util_min)}[/white]")
+                table.add_row(
+                    f"  MIN: [white]{self._format_percent(gpu_util_min)}[/white]"
+                )
             if gpu_util_max not in (None, 0):
-                table.add_row(f"  MAX: [white]{self._format_percent(gpu_util_max)}[/white]")
+                table.add_row(
+                    f"  MAX: [white]{self._format_percent(gpu_util_max)}[/white]"
+                )
             if imbalance not in (None, 0):
-                table.add_row(f"  IMBALANCE: [white]{self._format_ratio(imbalance)}[/white]")
+                table.add_row(
+                    f"  IMBALANCE: [white]{self._format_ratio(imbalance)}[/white]"
+                )
 
         # GPU MEMORY block
-        if gpu_mem_high is not None or gpu_mem_low not in (None, 0) or total_gpus is not None:
+        if (
+            gpu_mem_high is not None
+            or gpu_mem_low not in (None, 0)
+            or total_gpus is not None
+        ):
             table.add_row("")  # spacer
             table.add_row("[bold yellow]GPU MEMORY:[/bold yellow]")
             if gpu_mem_high is not None:
@@ -114,7 +126,6 @@ class SystemStdoutLogger(BaseStdoutLogger):
             width=80,
         )
         return panel
-
 
     def log_summary(self, summary: Dict[str, Any]):
         console = Console()
@@ -146,7 +157,7 @@ class SystemStdoutLogger(BaseStdoutLogger):
             return str(value)
 
         for key, value in summary.items():
-            display_key = key.replace('_', ' ').upper()
+            display_key = key.replace("_", " ").upper()
             display_value = fmt(key, value)
             table.add_row(display_key, "[bright_red]|[/bright_red]", display_value)
 

@@ -6,6 +6,7 @@ from typing import Dict, Any, List
 
 from .base_logger import BaseStdoutLogger
 from .display_manager import MODEL_SUMMARY_LAYOUT_NAME
+
 # from .display_manager import StdoutDisplayManager
 
 
@@ -17,7 +18,9 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
     """
 
     def __init__(self):
-        super().__init__(name="Layer Memory", layout_section_name=MODEL_SUMMARY_LAYOUT_NAME)
+        super().__init__(
+            name="Layer Memory", layout_section_name=MODEL_SUMMARY_LAYOUT_NAME
+        )
 
         self._latest_snapshot: Dict[str, Any] = {}
 
@@ -40,7 +43,7 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
             Group(table),
             title=f"Live Model #{model_index} – Total: {total_mb:.2f} MB",
             border_style="cyan",
-            width=80
+            width=80,
         )
 
     def log_summary(self, summary: Dict[str, Any]):
@@ -59,17 +62,21 @@ class LayerMemoryStdoutLogger(BaseStdoutLogger):
             "total_models_seen",
             "total_samples_taken",
             "average_model_memory_mb",
-            "peak_model_memory_mb"
+            "peak_model_memory_mb",
         ]
 
         for key in keys_to_display:
             value = summary.get(key, 0)
-            display_key = key.replace('_', ' ').upper()
+            display_key = key.replace("_", " ").upper()
             if "memory" in key:
                 display_value = f"{value:.2f} MB"
             else:
                 display_value = str(value)
             table.add_row(display_key, "[magenta3]|[/magenta3]", display_value)
 
-        panel = Panel(table, title=f"[bold magenta3]{self.name} - Final Summary", border_style="magenta3")
+        panel = Panel(
+            table,
+            title=f"[bold magenta3]{self.name} - Final Summary",
+            border_style="magenta3",
+        )
         console.print(panel)
