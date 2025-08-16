@@ -56,9 +56,9 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
             )
             for dev, stats in per_dev.items():
                 c_count = stats.get("cumulative_count", 0)
-                c_sum = stats.get("cumulative_sum_mb", 0.0)
-                c_avg = stats.get("cumulative_avg_mb", 0.0)
-                c_max = stats.get("cumulative_max_mb", 0.0)
+                c_sum = stats.get("cumulative_sum_memory", 0.0)
+                c_avg = stats.get("cumulative_avg_memory", 0.0)
+                c_max = stats.get("cumulative_max_memory", 0.0)
                 row = (
                     f"{dev} | count={c_count}  "
                     f"sum={c_sum:.2f} MB  avg={c_avg:.2f} MB  max={c_max:.2f} MB"
@@ -89,7 +89,7 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
     def _get_panel_renderable(self) -> Panel:
         snap = self._latest_snapshot or {}
         devices = snap.get("devices", {}) or {}
-        overall_avg = snap.get("overall_avg_mb", 0.0) or 0.0
+        overall_avg = snap.get("overall_avg_memory", 0.0) or 0.0
         drained = snap.get("drained_events", 0) or 0
         stale = bool(snap.get("stale", False))
         note = snap.get("note")
@@ -123,11 +123,11 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
             for dev, stats in devices.items():
                 dev_table.add_row(
                     str(dev),
-                    self._format_mb(stats.get("avg_mb")),
-                    self._format_mb(stats.get("max_mb")),
+                    self._format_mb(stats.get("avg_memory")),
+                    self._format_mb(stats.get("max_memory")),
                     (
-                        self._format_mb(stats.get("min_nonzero_mb"))
-                        if stats.get("min_nonzero_mb") is not None
+                        self._format_mb(stats.get("min_nonzero_memory"))
+                        if stats.get("min_nonzero_memory") is not None
                         else "—"
                     ),
                     str(stats.get("count", 0)),

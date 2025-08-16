@@ -171,10 +171,10 @@ class ActivationMemorySampler(BaseSampler):
 
             devices_out[dev] = {
                 "count": stats.count,
-                "sum_mb": round(stats.sum_memory, 4),
-                "avg_mb": round(stats.avg_memory, 4),
-                "max_mb": round(stats.max_memory, 4),
-                "min_nonzero_mb": (
+                "sum_memory": round(stats.sum_memory, 4),
+                "avg_memory": round(stats.avg_memory, 4),
+                "max_memory": round(stats.max_memory, 4),
+                "min_nonzero_memory": (
                     round(stats.min_nonzero_memory, 4)
                     if stats.min_nonzero_memory is not None
                     else None
