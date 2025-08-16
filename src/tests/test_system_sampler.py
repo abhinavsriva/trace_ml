@@ -72,7 +72,6 @@ def test_system_sampler_with_heavy_task():
 
 
 if __name__ == "__main__":
-
     # You might need to adjust PYTHONPATH if your traceml modules are not directly
     # importable from where you run this script. For example, if this test file
     # is in 'tests/' and 'traceml/' is in the project root, you'd run:

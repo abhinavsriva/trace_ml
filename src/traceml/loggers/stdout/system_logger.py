@@ -75,7 +75,7 @@ class SystemStdoutLogger(BaseStdoutLogger):
         ram_pct = ""
         try:
             if ram_total and ram_total > 0:
-                ram_pct = f" ({float(ram_used)/float(ram_total)*100:.1f}%)"
+                ram_pct = f" ({float(ram_used) / float(ram_total) * 100:.1f}%)"
         except Exception:
             ram_pct = ""
         table.add_row(

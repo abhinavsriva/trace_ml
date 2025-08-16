@@ -77,7 +77,7 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
             v = float(value)
         except (TypeError, ValueError):
             return "N/A"
-        return f"{v/1024.0:.2f} GB" if v >= 1024.0 else f"{v:.2f} MB"
+        return f"{v / 1024.0:.2f} GB" if v >= 1024.0 else f"{v:.2f} MB"
 
     def _pressure_badge(self, flag: Optional[bool]) -> str:
         if flag is True:
