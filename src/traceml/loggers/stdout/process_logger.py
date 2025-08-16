@@ -18,7 +18,7 @@ class ProcessStdoutLogger(BaseStdoutLogger):
     def __init__(self):
         super().__init__(name="Process", layout_section_name=PROCESS_LAYOUT_NAME)
 
-        self._latest_data = {
+        self._latest_snapshot = {
             "process_cpu_percent": 0.0,
             "process_ram": 0.0,
             "process_gpu_memory": None
@@ -50,7 +50,7 @@ class ProcessStdoutLogger(BaseStdoutLogger):
         Generates the Rich Panel for live display:
         """
         env = self._latest_env or {}
-        d = self._latest_data or {}
+        d = self._latest_snapshot or {}
 
         cpu_val = d.get("process_cpu_percent", 0.0)
         ram_val = d.get("process_ram", 0.0)
@@ -77,10 +77,6 @@ class ProcessStdoutLogger(BaseStdoutLogger):
             width=80,
         )
 
-    def log(self, snapshot_dict: Dict[str, Any]):
-        self._latest_env = snapshot_dict
-        self._latest_data = snapshot_dict.get("data") or {}
-        StdoutDisplayManager.update_display()
 
     def log_summary(self, summary: Dict[str, Any]):
         """

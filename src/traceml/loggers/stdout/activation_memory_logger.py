@@ -28,12 +28,7 @@ class ActivationMemoryStdoutLogger(BaseStdoutLogger):
     def __init__(self, layout_section_name: str = ACTIVATION_SUMMARY_LAYOUT_NAME):
         super().__init__(name="Activation Memory", layout_section_name=layout_section_name)
         self._latest_snapshot: Dict[str, Any] = {}
-
-    def log(self, snapshot_dict: Dict[str, Any]):
-        """Update the live snapshot and refresh the display."""
-        self._latest_env = snapshot_dict
-        self._latest_snapshot = snapshot_dict.get("data") or {}
-        StdoutDisplayManager.update_display()
+        
 
     def log_summary(self, summary: Dict[str, Any]):
         """Pretty-print final cumulative summary from sampler.get_summary()."""

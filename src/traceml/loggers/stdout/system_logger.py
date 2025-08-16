@@ -20,7 +20,7 @@ class SystemStdoutLogger(BaseStdoutLogger):
     def __init__(self):
         super().__init__(name="System", layout_section_name=SYSTEM_LAYOUT_NAME)
         self._latest_env: Optional[Dict[str, Any]] = None
-        self._latest_data: Dict[str, Any] = {}
+        self._latest_snapshot: Dict[str, Any] = {}
 
     def _format_percent(self, value: Any) -> str:
         try:
@@ -45,7 +45,7 @@ class SystemStdoutLogger(BaseStdoutLogger):
 
     def _get_panel_renderable(self) -> Panel:
         env = self._latest_env or {}
-        d = self._latest_data or {}
+        d = self._latest_snapshot or {}
 
         # CPU and RAM
         cpu_val = d.get("cpu_percent", 0.0)
@@ -115,10 +115,6 @@ class SystemStdoutLogger(BaseStdoutLogger):
         )
         return panel
 
-    def log(self, snapshot_dict: Dict[str, Any]):
-        self._latest_env = snapshot_dict
-        self._latest_data = snapshot_dict.get("data") or {}
-        StdoutDisplayManager.update_display()
 
     def log_summary(self, summary: Dict[str, Any]):
         console = Console()
